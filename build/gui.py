@@ -92,9 +92,13 @@ def Managerbrowse_photo():
     print(filename)
     return filename
 
-def SubmitForm( CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry):
+def SubmitForm(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry,selected_listbox):
+    selected_items = []
+    for index in range(selected_listbox.size()):
+        selected_items.append(selected_listbox.get(index))
+    # Concatenate the items into a single string separated by commas
+    selected_items_str = ', '.join(selected_items)
     
-    photo_path = browse_photo()
     First_Name = EmployeeFirstNameentry.get()
     Middle_Name = EmployeeMiddleNameentry.get()
     Last_Name = EmployeeLastNameentry.get()
@@ -107,9 +111,11 @@ def SubmitForm( CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMid
     Highest_Education = EmployeeEducationentry.get()
     Work_Experience = EmployeeWorkExperienceentry.get()
     Previous_Salary = EmployeeSalaryentry.get()
+    Skills =selected_items_str
+    photo_path = browse_photo()
     
     photo_path = photo_path  # Get the path of the uploaded photo
-    if CompanyName and username and Password and First_Name and Middle_Name and Last_Name and Age and Gender and Mobile_Number and Birthdate and Designation and MailID and Highest_Education and Work_Experience and Previous_Salary and photo_path:
+    if CompanyName and username and Password and First_Name and Middle_Name and Last_Name and Age and Gender and Mobile_Number and Birthdate and Designation and MailID and Highest_Education and Work_Experience and Previous_Salary and photo_path and Skills:
         with open(photo_path, "rb") as photo_file:
             photo_data = base64.b64encode(photo_file.read()).decode('utf-8')
             data = {
@@ -128,6 +134,7 @@ def SubmitForm( CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMid
                 "Highest_Education" : Highest_Education,
                 "Work_Experience" : Work_Experience,
                 "Previous_Salary" : Previous_Salary,
+                "Skills" : Skills,
                 "photo": photo_data  # Store the photo data directly in the document
             }
             EmployeeCollection.insert_one(data)
@@ -323,7 +330,7 @@ def ChooseSkills(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMi
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: SubmitForm(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry,selected_listbox),
         relief="flat"
     )
     button_1.place(
@@ -332,6 +339,18 @@ def ChooseSkills(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMi
         width=126.0,
         height=36.0
     )
+
+def display(selected_listbox):
+    # Create an empty list to store the items
+    selected_items = []
+
+    # Iterate over each item in the selected_listbox and append it to the selected_items list
+    for index in range(selected_listbox.size()):
+        selected_items.append(selected_listbox.get(index))
+
+    # Print the list of selected items
+    print(selected_items)
+
 
 def PersonalDetailForm(CompanyName,username,Password):
     global image_image_1,entry_image_1,entry_image_2,entry_image_3,entry_image_4,entry_image_5,entry_image_6,entry_image_7,entry_image_8,entry_image_9,entry_image_10,entry_image_11,entry_image_12,button_image_1,button_image_2
@@ -719,6 +738,10 @@ def PersonalDetailForm(CompanyName,username,Password):
         width=136.0,
         height=17.0
     )
+    
+    def call():
+        filename = browse_photo()
+        return filename
 
     button_image_1 = PhotoImage(
         file=relative_to_assets("button_33.png"))
@@ -726,7 +749,7 @@ def PersonalDetailForm(CompanyName,username,Password):
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: browse_photo(),
+        command=lambda:call(),
         relief="flat"
     )
     button_1.place(
@@ -735,6 +758,7 @@ def PersonalDetailForm(CompanyName,username,Password):
         width=118.0,
         height=28.0
     )
+    
 
     button_image_2 = PhotoImage(
         file=relative_to_assets("button_34.png"))
@@ -751,6 +775,7 @@ def PersonalDetailForm(CompanyName,username,Password):
         width=118.0,
         height=28.0
     )
+    
 
 
     '''print(username)
@@ -2810,7 +2835,7 @@ def UserProfile(UserID):
             575.0,
             171.0,
             anchor="nw",
-            text="Software Engineer",
+            text="" + user_data["Designation"],
             fill="#FFFFFF",
             font=("Libre Caslon Text", 8 * -1)
         )
