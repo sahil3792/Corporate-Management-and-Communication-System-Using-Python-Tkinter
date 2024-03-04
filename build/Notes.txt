@@ -1,0 +1,6 @@
+bd=0,
+        bg="#173054",
+        fg="#000716",
+        highlightthickness=0
+
+        UserCollection.find({},{'CompanyName':1})
