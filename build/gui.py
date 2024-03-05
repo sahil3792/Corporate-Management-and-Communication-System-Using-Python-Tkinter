@@ -35,6 +35,33 @@ import tkinter as tk
 import socket
 import threading
 import customtkinter
+import subprocess
+
+try:
+    import nltk
+    import sklearn
+    import pandas
+    import docx
+except ModuleNotFoundError:
+    print("NLTK is not installed. Installing...")
+    subprocess.check_call(["pip", "install", "nltk"])
+    subprocess.check_call(["pip","install","scikit-learn"])
+    subprocess.check_call(["pip","install","pandas"])
+    subprocess.check_call(["pip","install","python-docx"])
+    import nltk
+    import sklearn
+    import pandas
+    import docx
+import tkinter as tk
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+import pandas as pd
+import pickle
+from docx import Document
 import os
 
 # Get the directory path of the current Python script
@@ -61,24 +88,17 @@ EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
 
 #print(client.list_database_names)
 
-
-
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(full_path)
-
-
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-
 window = Tk()
-
 window.geometry("700x450")
 window.configure(bg = "#FFFFFF")
 window.iconbitmap("Skive_Logo.ico")
 window.title("Skive")
-
 
 invited_users = []
 invited_users_ipaddress = []
@@ -350,7 +370,6 @@ def display(selected_listbox):
 
     # Print the list of selected items
     print(selected_items)
-
 
 def PersonalDetailForm(CompanyName,username,Password):
     global image_image_1,entry_image_1,entry_image_2,entry_image_3,entry_image_4,entry_image_5,entry_image_6,entry_image_7,entry_image_8,entry_image_9,entry_image_10,entry_image_11,entry_image_12,button_image_1,button_image_2
@@ -1258,7 +1277,253 @@ def Todo():
 def TextEditor():
     import Text    
 
-def AdminProfile(UserID):
+def TaskAssignmentTool(UserID,Company_Name):
+    global TaskAssignmentFrame,UploadButtonImage,TaskAssignmentBG
+    TaskAssignmentFrame = Frame(window, height=450, width=510)
+    TaskAssignmentFrame.place(x=36, y=0)
+    nltk.download('punkt')
+    nltk.download('stopwords')
+    nltk.download('wordnet')
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    sub_dir = "assets\\final_combined_dataset_skive.csv"
+    full_path = os.path.join(script_dir,sub_dir)
+    # Now 'script_dir' contains the directory path of the current Python script
+
+    # Load and preprocess dataset
+    dataset = pd.read_csv(full_path)
+
+    # Function to handle NaN values and preprocess text
+    def preprocess_text(text):
+        if pd.isnull(text):
+            return ""
+        else:
+            tokens = word_tokenize(text)
+            tokens = [word for word in tokens if word.isalnum()]
+            stop_words = set(stopwords.words('english'))
+            tokens = [word for word in tokens if not word in stop_words]
+            lemmatizer = WordNetLemmatizer()
+            tokens = [lemmatizer.lemmatize(word.lower()) for word in tokens]
+            return ' '.join(tokens)
+
+    # Apply preprocessing to problem statements
+    dataset['processed_statement'] = dataset['problem_statement'].apply(preprocess_text)
+
+    # Fill NaN values in dataset
+    dataset.fillna('', inplace=True)  # Replace NaN values with an empty string
+
+    # Vectorize problem statements using TF-IDF
+    tfidf_vectorizer = TfidfVectorizer(max_features=1000)
+    X = tfidf_vectorizer.fit_transform(dataset['processed_statement'])
+    y = dataset['required_skills']
+
+    # Train Support Vector Machine (SVM) classifier
+    svm_classifier = SVC(kernel='linear')
+    svm_classifier.fit(X, y)
+
+    # Save the trained vectorizer and classifier
+    with open('vectorizer.pkl', 'wb') as f:
+        pickle.dump(tfidf_vectorizer, f)
+
+    with open('classifier.pkl', 'wb') as f:
+        pickle.dump(svm_classifier, f)
+    
+    def displayEmployeeWithRequiredSkills(skills_text):
+        DisplayEmployeeWithRequiredSkillsFrame = customtkinter.CTkScrollableFrame(TaskAssignmentFrame, width=290)
+        DisplayEmployeeWithRequiredSkillsFrame.place(x=11, y=110)
+        DisplayEmployeeWithRequiredSkillsFrame.configure(height=20)
+        print(Company_Name)
+        print(UserID)
+        # Query the database
+        cursor = EmployeeCollection.find({"CompanyName": Company_Name})
+        matched_employees = []
+
+        # Filter employees with required skills
+        for employee in cursor:
+            print("in first forloop")
+            employee_skills = employee["Skills"].split(",")
+            common_skills_count = sum(skill.strip() in skills_text for skill in employee_skills)
+            print(common_skills_count)
+            if common_skills_count >= 1:
+                print(employee)
+                matched_employees.append(employee)
+        
+            
+        for employee in matched_employees:
+            print("Name:", employee["First_Name"], employee["Last_Name"])
+            print("Skills:", employee["Skills"])
+            print("-------------------")
+        
+            if "photo" in employee:
+                photo_data_base64 = employee["photo"]
+                # Decode Base64 data
+                photo_data_binary = base64.b64decode(photo_data_base64)
+                with open("user_photo.jpg", "wb") as f:
+                    f.write(photo_data_binary)
+                image = Image.open("user_photo.jpg")
+                image = image.resize((35, 35), Image.LANCZOS)
+                image = round_corners(image, 50)
+            
+            else:
+                print("Photo not found for the specified user.")
+            user_frame = ttk.Frame(DisplayEmployeeWithRequiredSkillsFrame, padding=5, relief="raised")
+            user_frame.pack(fill=tk.BOTH, expand=True)
+            
+            photo = ImageTk.PhotoImage(image)
+            image_label = tk.Label(user_frame, image=photo)
+            image_label.image = photo  # Keep a reference to avoid garbage collection
+            image_label.pack(anchor="w")
+
+            label = ttk.Label(user_frame, text=""+employee["First_Name"])
+            label.pack(side=tk.LEFT)
+            
+            button = ttk.Button(user_frame, text="Message", command=lambda:print("Assign"))
+            button.pack(side=tk.RIGHT)
+    
+
+    # Function to extract text from Word document
+    def extract_text_from_docx(file_path):
+        doc = Document(file_path)
+        full_text = []
+        for para in doc.paragraphs:
+            full_text.append(para.text)
+        return '\n'.join(full_text)
+
+    # Function to predict required skills
+    def predict_required_skills(problem_statement):
+        processed_statement = preprocess_text(problem_statement)
+        vectorized_statement = tfidf_vectorizer.transform([processed_statement])
+        predicted_skills = svm_classifier.predict(vectorized_statement)
+        return predicted_skills
+
+    # GUI application
+    def upload_document():
+        file_path = filedialog.askopenfilename(filetypes=[("Word documents", "*.docx"), ("All files", "*.*")])
+        if file_path:
+            try:
+                document_text = extract_text_from_docx(file_path)
+                predicted_skills = predict_required_skills(document_text)
+                skills_text = ', '.join(predicted_skills)
+                canvas.itemconfig(result_label,text="" + str(skills_text))
+                print("Problem Statement:")
+                print(document_text)
+                print("Required Skills =" +skills_text)
+                displayEmployeeWithRequiredSkills(skills_text)
+
+            except Exception as e:
+                print("Error occurred:", e)
+
+
+    # Create and place widgets
+    #upload_button = tk.Button(window, text="Upload Document", command=upload_document)
+    #upload_button.pack(pady=20)
+
+    #result_label = tk.Label(window, text="")
+    #result_label.pack()
+
+    canvas = Canvas(
+        TaskAssignmentFrame,
+        bg = "#3A868F",
+        height = 450,
+        width = 510,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    TaskAssignmentBG = PhotoImage(
+        file=relative_to_assets("image_17.png"))
+    image_1 = canvas.create_image(
+        255.0,
+        225.0,
+        image=TaskAssignmentBG
+    )
+
+    canvas.create_rectangle(
+        17.0,
+        11.0,
+        493.0,
+        165.0,
+        fill="#225777",
+        outline="")
+
+    canvas.create_text(
+        35.0,
+        26.0,
+        anchor="nw",
+        text="Task Assignment Tool",
+        fill="#ECECD9",
+        font=("Libre Caslon Text", 19 * -1)
+    )
+
+    canvas.create_text(
+        35.0,
+        71.0,
+        anchor="nw",
+        text="Choose Document \nfrom Files:-",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 14 * -1)
+    )
+
+    canvas.create_text(
+        35.0,
+        113.0,
+        anchor="nw",
+        text="Skills Required :-",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 14 * -1)
+    )
+
+    result_label=canvas.create_text(
+        159.0,
+        113.0,
+        anchor="nw",
+        text="",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 14 * -1)
+    )
+
+    UploadButtonImage = PhotoImage(
+        file=relative_to_assets("button_36.png"))
+    upload_button = Button(
+        image=UploadButtonImage,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: upload_document(),
+        relief="flat"
+    )
+    upload_button.place(
+        x=199.0,
+        y=71.0,
+        width=192.0,
+        height=36.0
+    )
+
+    canvas.create_rectangle(
+        17.0,
+        181.0,
+        493.0,
+        433.0,
+        fill="#D9D9D9",
+        outline="")
+
+    canvas.create_rectangle(
+        33.0,
+        197.0,
+        479.0,
+        278.0,
+        fill="#173054",
+        outline="")
+
+    canvas.create_rectangle(
+        33.0,
+        284.0,
+        479.0,
+        365.0,
+        fill="#173054",
+        outline="")
+
+def AdminProfile(UserID,Company_Name):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
     global button_image_7,button_image_8,button_image_9,button_image_10,button_image_11,button_image_12
@@ -1427,7 +1692,7 @@ def AdminProfile(UserID):
             image=button_image_5,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_17 clicked"),
+            command=lambda: TaskAssignmentTool(UserID,Company_Name),
             relief="flat"
         )
         button_5.place(
@@ -1643,7 +1908,7 @@ def AdminSignInAuthentication(CompanyName,Username,Password):
         if document["UserName"] == Admin_UserName and document["Password"] == Admin_Password:
             print("Authentication successful.")
             
-            AdminProfile(Admin_UserName)
+            AdminProfile(Admin_UserName,Company_Name)
             # You can perform further actions here if authentication is successful
             break
     else:
@@ -2521,7 +2786,7 @@ def ManagerSubmitForm(CompanyName,UserName,Email,Password,ManagerFirstNameEntry,
             AdminCollection.insert_one(data)
             print("Data saved successfully!")
             
-            AdminProfile(UserName)
+            AdminProfile(UserName,CompanyName)
 
 def WorkspaceSignUpAuthentication(entry_2,entry_3,entry_4,entry_5, entry_6):
     
