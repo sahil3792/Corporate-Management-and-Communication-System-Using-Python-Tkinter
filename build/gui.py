@@ -1336,22 +1336,32 @@ def TaskAssignmentTool(UserID,Company_Name):
         # Query the database
         cursor = EmployeeCollection.find({"CompanyName": Company_Name})
         matched_employees = []
+        required_skills = set(skill.strip().lower() for skill in skills_text.split(','))
+        print(required_skills)
+        matched_skills_count = {}
+        matched_skills = {}
 
         # Filter employees with required skills
         for employee in cursor:
-            print("in first forloop")
-            employee_skills = employee["Skills"].split(",")
-            common_skills_count = sum(skill.strip() in skills_text for skill in employee_skills)
-            print(common_skills_count)
-            if common_skills_count >= 1:
-                print(employee)
-                matched_employees.append(employee)
+            # Split the employee's skills into individual skills and convert them to lowercase
+            employee_skills = [skill.strip().lower() for skill in employee["Skills"].split(',')]
+            # Find the matched skills, ignoring case
+            matched_skills_list = [skill for skill in employee_skills if skill in required_skills]
+            if matched_skills_list:
+                matched_skills_count[employee["_id"]] = len(matched_skills_list)
+                matched_skills[employee["_id"]] = matched_skills_list
+        # Sort employees based on the number of matched skills
+        sorted_employees = sorted(matched_skills_count.items(), key=lambda x: x[1], reverse=True)
+
         
             
-        for employee in matched_employees:
-            print("Name:", employee["First_Name"], employee["Last_Name"])
-            print("Skills:", employee["Skills"])
-            print("-------------------")
+        for employee_id, matched_count in sorted_employees:
+            if matched_count > 0:
+                employee = EmployeeCollection.find_one({"_id": employee_id})
+                print("Name:", employee["First_Name"], employee["Last_Name"])
+                print("Matched Skills:", matched_count)
+                print("Matched Skills:", ", ".join(matched_skills[employee_id]))
+                print("-------------------")
         
             if "photo" in employee:
                 photo_data_base64 = employee["photo"]
