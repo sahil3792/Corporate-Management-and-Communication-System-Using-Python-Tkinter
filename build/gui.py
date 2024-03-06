@@ -1358,8 +1358,8 @@ def TaskAssignmentTool(UserID,Company_Name):
         for employee_id, matched_count in sorted_employees:
             if matched_count > 0:
                 employee = EmployeeCollection.find_one({"_id": employee_id})
-                print("Name:", employee["First_Name"], employee["Last_Name"])
-                print("Matched Skills:", matched_count)
+                print("Name:", employee["UserName"], matched_skills[employee_id])
+                print("Number of Matched Skills:", matched_count)
                 print("Matched Skills:", ", ".join(matched_skills[employee_id]))
                 print("-------------------")
         
@@ -1386,7 +1386,7 @@ def TaskAssignmentTool(UserID,Company_Name):
             label = ttk.Label(user_frame, text=""+employee["First_Name"])
             label.pack(side=tk.LEFT)
             
-            button = ttk.Button(user_frame, text="Message", command=lambda:print("Assign"))
+            button = ttk.Button(user_frame, text="Assign", command=lambda:print("Assign"))
             button.pack(side=tk.RIGHT)
     
 
@@ -1414,6 +1414,7 @@ def TaskAssignmentTool(UserID,Company_Name):
                 predicted_skills = predict_required_skills(document_text)
                 skills_text = ', '.join(predicted_skills)
                 canvas.itemconfig(result_label,text="" + str(skills_text))
+                print(predicted_skills)
                 print("Problem Statement:")
                 print(document_text)
                 print("Required Skills =" +skills_text)
@@ -1423,13 +1424,7 @@ def TaskAssignmentTool(UserID,Company_Name):
                 print("Error occurred:", e)
 
 
-    # Create and place widgets
-    #upload_button = tk.Button(window, text="Upload Document", command=upload_document)
-    #upload_button.pack(pady=20)
-
-    #result_label = tk.Label(window, text="")
-    #result_label.pack()
-
+    
     canvas = Canvas(
         TaskAssignmentFrame,
         bg = "#3A868F",
