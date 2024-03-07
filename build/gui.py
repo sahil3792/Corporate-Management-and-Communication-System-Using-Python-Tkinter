@@ -3036,8 +3036,197 @@ def round_corners(image, radius):
     result.paste(image, mask=mask)
     return result
 
-def GroupChatApplication():
+def GroupChatApplication(UserID):
+    global LeftFramePhotoImageGroupChat,CreateGroupChatButtonImage
+    # Main frame
+    main_frame = tk.Frame(window, width=510, height=450)
+    main_frame.place(x=36,y=0)
+    # Left frame for group chat label and search button
+    left_frame = tk.Frame(main_frame, width=190, height=450)
+    left_frame.place(x=0,y=0)
+
+    def search_employees(username):
+        regex = f"^{username}"
+        employees = EmployeeCollection.find({"UserName": {"$regex": regex}})
+        return [employee["UserName"] for employee in employees]
+
+    def open_group_creation_window():
+        # Create a new window for group creation
+        group_creation_window = tk.Toplevel()
+        group_creation_window.title("Create Group")
+
+        def add_selected_user():
+            selected_user = search_dropdown.get()
+            if selected_user:
+                selected_users_listbox.insert(tk.END, selected_user)
+                search_dropdown.set('')
+        
+        def create_group():
+            group_name = group_name_entry.get()
+            selected_users = selected_users_listbox.get(0, tk.END)
+            if not group_name:
+                messagebox.showerror("Error", "Please enter a group name.")
+                return
+            if not selected_users:
+                messagebox.showerror("Error", "Please select at least one user for the group.")
+                return
+            print("Group Name:", group_name)
+            print("Selected Users:", selected_users)
+            group_creation_window.destroy()
+
+        def on_search_entry_changed(*args):
+            search_text = search_var.get()
+            matches = search_employees(search_text)
+            search_dropdown.configure(values=matches)
+
+        # Widgets in the group creation window
+        group_name_label = tk.Label(group_creation_window, text="Enter Group Name:")
+        group_name_label.grid(row=0, column=0, padx=10, pady=5)
+
+        group_name_entry = tk.Entry(group_creation_window)
+        group_name_entry.grid(row=0, column=1, padx=10, pady=5)
+
+        search_label = tk.Label(group_creation_window, text="Search Employee:")
+        search_label.grid(row=1, column=0, padx=10, pady=5)
+
+        search_var = tk.StringVar()
+        search_var.trace("w", on_search_entry_changed)
+        search_entry = tk.Entry(group_creation_window, textvariable=search_var)
+        search_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        search_dropdown = ttk.Combobox(group_creation_window)
+        search_dropdown.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+
+        add_button = tk.Button(group_creation_window, text="Add", command=add_selected_user)
+        add_button.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+
+        selected_users_label = tk.Label(group_creation_window, text="Selected Users:")
+        selected_users_label.grid(row=4, column=0, padx=10, pady=5)
+
+        selected_users_listbox = tk.Listbox(group_creation_window, selectmode="multiple")
+        selected_users_listbox.grid(row=5, column=0, columnspan=2, padx=10, pady=5)
+
+        create_group_button = tk.Button(group_creation_window, text="Create Group", command=create_group)
+        create_group_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
+
+        submit_button = tk.Button(group_creation_window, text="Submit", command=group_creation_window.destroy)
+        submit_button.grid(row=7, column=0, columnspan=2, padx=10, pady=5)
+
+    # GUI Setup
     
+    
+
+
+    canvas = Canvas(
+        left_frame,
+        bg = "#ECECD9",
+        height = 450,
+        width = 190,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    canvas.create_rectangle(
+        0.0,
+        0.0,
+        190.0,
+        39.0,
+        fill="#3A868F",
+        outline="")
+
+    canvas.create_rectangle(
+        4.0,
+        43.0,
+        186.0,
+        81.0,
+        fill="#3A868F",
+        outline="")
+
+    canvas.create_rectangle(
+        4.0,
+        87.0,
+        186.0,
+        125.0,
+        fill="#3A868F",
+        outline="")
+
+    LeftFramePhotoImageGroupChat = PhotoImage(
+        file=relative_to_assets("image_18.png"))
+    image_1 = canvas.create_image(
+        95.0,
+        225.0,
+        image=LeftFramePhotoImageGroupChat
+    )
+
+    CreateGroupChatButtonImage = PhotoImage(
+        file=relative_to_assets("button_37.png"))
+    button_1 = Button(
+        image=CreateGroupChatButtonImage,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: open_group_creation_window(),
+        relief="flat"
+    )
+    button_1.place(
+        x=154.0,
+        y=3.0,
+        width=33.0,
+        height=33.0
+    )
+
+    canvas.create_text(
+        1.0,
+        1.0,
+        anchor="nw",
+        text="Group Chat",
+        fill="#173054",
+        font=("Libre Caslon Text", 14 * -1)
+    )
+
+    canvas.create_text(
+        169.0,
+        108.0,
+        anchor="nw",
+        text="5",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 12 * -1)
+    )
+
+    canvas.create_text(
+        11.0,
+        92.0,
+        anchor="nw",
+        text="Group Name",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 12 * -1)
+    )
+
+    canvas.create_text(
+        168.0,
+        64.0,
+        anchor="nw",
+        text="5",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 12 * -1)
+    )
+
+    canvas.create_text(
+        10.0,
+        48.0,
+        anchor="nw",
+        text="Group Name",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 12 * -1)
+    )
+
+    # Right frame for group creation
+    right_frame = tk.Frame(main_frame, width=320, height=450)
+    right_frame.place(x=190, y=0)
+
+
+    '''
 
     # Function to handle searching for employees
     def search_employee():
@@ -3055,54 +3244,49 @@ def GroupChatApplication():
 
     # Function to handle clicking on the "Create Group" button
     def create_group_button_clicked():
-        create_group()
+        create_group()'''
 
     
 
-    # Main frame
-    main_frame = tk.Frame(window, width=510, height=450)
-    main_frame.pack()
+    
 
-    # Left frame for group chat label and search button
-    left_frame = tk.Frame(main_frame, width=100, height=450)
-    left_frame.grid(row=0, column=0)
+    
 
-    group_chat_label = tk.Label(left_frame, text="Group Chat")
-    group_chat_label.pack(pady=10)
+    # group_chat_label = tk.Label(left_frame, text="Group Chat")
+    # group_chat_label.pack(pady=10)
 
-    search_button = tk.Button(left_frame, text="Search Employee", command=search_button_clicked)
-    search_button.pack(pady=10)
+    # search_button = tk.Button(left_frame, text="Search Employee", command=search_button_clicked)
+    # search_button.pack(pady=10)
 
-    # Right frame for group creation
-    right_frame = tk.Frame(main_frame, width=410, height=450)
-    right_frame.grid(row=0, column=1)
+    
+
 
     # Function to display group creation GUI
-    def display_group_creation_gui():
-        # Clear previous content
-        for widget in right_frame.winfo_children():
-            widget.destroy()
+    # def display_group_creation_gui():
+    #     # Clear previous content
+    #     for widget in right_frame.winfo_children():
+    #         widget.destroy()
 
-        # Group name entry
-        group_name_label = tk.Label(right_frame, text="Enter Group Name:")
-        group_name_label.pack(pady=10)
+    #     # Group name entry
+    #     group_name_label = tk.Label(right_frame, text="Enter Group Name:")
+    #     group_name_label.pack(pady=10)
 
-        group_name_entry = tk.Entry(right_frame, width=40)
-        group_name_entry.pack()
+    #     group_name_entry = tk.Entry(right_frame, width=40)
+    #     group_name_entry.pack()
 
-        # Search employee entry
-        search_employee_label = tk.Label(right_frame, text="Search Employee:")
-        search_employee_label.pack(pady=10)
+    #     # Search employee entry
+    #     search_employee_label = tk.Label(right_frame, text="Search Employee:")
+    #     search_employee_label.pack(pady=10)
 
-        search_employee_entry = tk.Entry(right_frame, width=40)
-        search_employee_entry.pack()
+    #     search_employee_entry = tk.Entry(right_frame, width=40)
+    #     search_employee_entry.pack()
 
-        # Button to create group
-        create_group_button = tk.Button(right_frame, text="Create Group", command=create_group_button_clicked)
-        create_group_button.pack(pady=10)
+    #     # Button to create group
+    #     create_group_button = tk.Button(right_frame, text="Create Group", command=create_group_button_clicked)
+    #     create_group_button.pack(pady=10)
 
-    # Initially display the group creation GUI
-    display_group_creation_gui()
+    # # Initially display the group creation GUI
+    # display_group_creation_gui()
 
 
 
@@ -3277,7 +3461,7 @@ def UserProfile(UserID):
             image=button_image_5,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: GroupChatApplication(),
+            command=lambda: GroupChatApplication(UserID),
             relief="flat"
         )
         button_5.place(
