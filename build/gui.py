@@ -82,9 +82,11 @@ except Exception as e:
 AdminCollection = None
 AdminDatabase = client["AdminDatabase"]
 EmployeeDatabase = client["EmployeeDatabase"]
+GroupChatDatabase = client["GroupChatDatabase"]
 
 AdminCollection = AdminDatabase["ManagerCollection"]
 EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
+GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 
 #print(client.list_database_names)
 
@@ -160,7 +162,7 @@ def SubmitForm(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMidd
             EmployeeCollection.insert_one(data)
             print("Data saved successfully!")
             print(username)
-            UserProfile(username)
+            UserProfile(CompanyName,username)
 
 def ChooseSkills(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry):
     global image_image_1,button_image_1,entry_image_1
@@ -3036,7 +3038,7 @@ def round_corners(image, radius):
     result.paste(image, mask=mask)
     return result
 
-def GroupChatApplication(UserID):
+def GroupChatApplication(CompanyName,UserID):
     global LeftFramePhotoImageGroupChat,CreateGroupChatButtonImage
     # Main frame
     main_frame = tk.Frame(window, width=510, height=450)
@@ -3045,8 +3047,54 @@ def GroupChatApplication(UserID):
     left_frame = tk.Frame(main_frame, width=190, height=450)
     left_frame.place(x=0,y=0)
 
+    created_groups = []
+    def DisplayGroups():
+        # Assuming GroupChatCollection is a collection object connected to MongoDB
+
+        # Query documents from GroupChatCollection
+        group_chats = GroupChatCollection.find({"CreatedBy": UserID})
+
+        # Variables for positioning widgets
+        y_offset = 10  # Initial y-offset for placing widgets
+
+        # Iterate over documents
+        for i, group_chat in enumerate(group_chats):
+            # Create rectangle
+            canvas.create_rectangle(
+                4.0,
+                y_offset + 40 * i,  # Adjust y-offset for each group chat
+                186.0,
+                y_offset + 40 * (i + 1),  # Adjust y-offset for each group chat
+                fill="#3A868F",
+                outline=""
+            )
+            
+            # Create text for group name
+            canvas.create_text(
+                11.0,
+                y_offset + 20 + 40 * i,  # Adjust y-offset for each group chat
+                anchor="nw",
+                text=group_chat["GroupName"],  # Get group name from document
+                fill="#FFFFFF",
+                font=("Libre Caslon Text", 12 * -1)
+            )
+            
+            # Create text for number of selected users
+            canvas.create_text(
+                169.0,
+                y_offset + 20 + 40 * i,  # Adjust y-offset for each group chat
+                anchor="nw",
+                text=str(len(group_chat["SelectedUsers"])),  # Get number of selected users from document
+                fill="#FFFFFF",
+                font=("Libre Caslon Text", 12 * -1)
+            )
+
+    
+
+
     def search_employees(username):
         regex = f"^{username}"
+        # Assuming EmployeeCollection is accessible here
         employees = EmployeeCollection.find({"UserName": {"$regex": regex}})
         return [employee["UserName"] for employee in employees]
 
@@ -3064,14 +3112,32 @@ def GroupChatApplication(UserID):
         def create_group():
             group_name = group_name_entry.get()
             selected_users = selected_users_listbox.get(0, tk.END)
+            
+            # Check if group name already exists
+            if GroupChatCollection.find_one({"GroupName": group_name}):
+                messagebox.showerror("Error", "A group with the same name already exists. Please choose a different name.")
+                return
+            
             if not group_name:
                 messagebox.showerror("Error", "Please enter a group name.")
                 return
             if not selected_users:
                 messagebox.showerror("Error", "Please select at least one user for the group.")
                 return
+            
+            # Store group chat data in the database
+            group_chat_data = {
+                "CreatedBy": UserID,  # Assuming UserID is the username of the user who created the group
+                "CompanyName": CompanyName,  # Replace with the actual company name
+                "GroupName": group_name,
+                "SelectedUsers": selected_users
+            }
+            GroupChatCollection.insert_one(group_chat_data)
+            
             print("Group Name:", group_name)
             print("Selected Users:", selected_users)
+            created_groups.append(group_name)
+            DisplayGroups()
             group_creation_window.destroy()
 
         def on_search_entry_changed(*args):
@@ -3112,10 +3178,14 @@ def GroupChatApplication(UserID):
         submit_button = tk.Button(group_creation_window, text="Submit", command=group_creation_window.destroy)
         submit_button.grid(row=7, column=0, columnspan=2, padx=10, pady=5)
 
-    # GUI Setup
     
-    
+    # Main frame
+    main_frame = tk.Frame(window, width=510, height=450)
+    main_frame.place(x=36,y=0)
 
+    # Left frame for group chat label and search button
+    left_frame = tk.Frame(main_frame, width=190, height=450)
+    left_frame.place(x=0,y=0)
 
     canvas = Canvas(
         left_frame,
@@ -3128,6 +3198,7 @@ def GroupChatApplication(UserID):
     )
 
     canvas.place(x = 0, y = 0)
+    DisplayGroups()
     canvas.create_rectangle(
         0.0,
         0.0,
@@ -3136,21 +3207,21 @@ def GroupChatApplication(UserID):
         fill="#3A868F",
         outline="")
 
-    canvas.create_rectangle(
-        4.0,
-        43.0,
-        186.0,
-        81.0,
-        fill="#3A868F",
-        outline="")
+    # canvas.create_rectangle(
+    #     4.0,
+    #     43.0,
+    #     186.0,
+    #     81.0,
+    #     fill="#3A868F",
+    #     outline="")
 
-    canvas.create_rectangle(
-        4.0,
-        87.0,
-        186.0,
-        125.0,
-        fill="#3A868F",
-        outline="")
+    # canvas.create_rectangle(
+    #     4.0,
+    #     87.0,
+    #     186.0,
+    #     125.0,
+    #     fill="#3A868F",
+    #     outline="")
 
     LeftFramePhotoImageGroupChat = PhotoImage(
         file=relative_to_assets("image_18.png"))
@@ -3185,114 +3256,47 @@ def GroupChatApplication(UserID):
         font=("Libre Caslon Text", 14 * -1)
     )
 
-    canvas.create_text(
-        169.0,
-        108.0,
-        anchor="nw",
-        text="5",
-        fill="#FFFFFF",
-        font=("Libre Caslon Text", 12 * -1)
-    )
+    # canvas.create_text(
+    #     169.0,
+    #     108.0,
+    #     anchor="nw",
+    #     text="5",
+    #     fill="#FFFFFF",
+    #     font=("Libre Caslon Text", 12 * -1)
+    # )
 
-    canvas.create_text(
-        11.0,
-        92.0,
-        anchor="nw",
-        text="Group Name",
-        fill="#FFFFFF",
-        font=("Libre Caslon Text", 12 * -1)
-    )
+    # canvas.create_text(
+    #     11.0,
+    #     92.0,
+    #     anchor="nw",
+    #     text="Group Name",
+    #     fill="#FFFFFF",
+    #     font=("Libre Caslon Text", 12 * -1)
+    # )
 
-    canvas.create_text(
-        168.0,
-        64.0,
-        anchor="nw",
-        text="5",
-        fill="#FFFFFF",
-        font=("Libre Caslon Text", 12 * -1)
-    )
+    # canvas.create_text(
+    #     168.0,
+    #     64.0,
+    #     anchor="nw",
+    #     text="5",
+    #     fill="#FFFFFF",
+    #     font=("Libre Caslon Text", 12 * -1)
+    # )
 
-    canvas.create_text(
-        10.0,
-        48.0,
-        anchor="nw",
-        text="Group Name",
-        fill="#FFFFFF",
-        font=("Libre Caslon Text", 12 * -1)
-    )
+    # canvas.create_text(
+    #     10.0,
+    #     48.0,
+    #     anchor="nw",
+    #     text="Group Name",
+    #     fill="#FFFFFF",
+    #     font=("Libre Caslon Text", 12 * -1)
+    # )
 
     # Right frame for group creation
     right_frame = tk.Frame(main_frame, width=320, height=450)
     right_frame.place(x=190, y=0)
 
-
-    '''
-
-    # Function to handle searching for employees
-    def search_employee():
-        # Implement logic to search for employees
-        pass
-
-    # Function to handle creating a new group
-    def create_group():
-        # Implement logic to create a new group
-        pass
-
-    # Function to handle clicking on the "Search" button
-    def search_button_clicked():
-        search_employee()
-
-    # Function to handle clicking on the "Create Group" button
-    def create_group_button_clicked():
-        create_group()'''
-
-    
-
-    
-
-    
-
-    # group_chat_label = tk.Label(left_frame, text="Group Chat")
-    # group_chat_label.pack(pady=10)
-
-    # search_button = tk.Button(left_frame, text="Search Employee", command=search_button_clicked)
-    # search_button.pack(pady=10)
-
-    
-
-
-    # Function to display group creation GUI
-    # def display_group_creation_gui():
-    #     # Clear previous content
-    #     for widget in right_frame.winfo_children():
-    #         widget.destroy()
-
-    #     # Group name entry
-    #     group_name_label = tk.Label(right_frame, text="Enter Group Name:")
-    #     group_name_label.pack(pady=10)
-
-    #     group_name_entry = tk.Entry(right_frame, width=40)
-    #     group_name_entry.pack()
-
-    #     # Search employee entry
-    #     search_employee_label = tk.Label(right_frame, text="Search Employee:")
-    #     search_employee_label.pack(pady=10)
-
-    #     search_employee_entry = tk.Entry(right_frame, width=40)
-    #     search_employee_entry.pack()
-
-    #     # Button to create group
-    #     create_group_button = tk.Button(right_frame, text="Create Group", command=create_group_button_clicked)
-    #     create_group_button.pack(pady=10)
-
-    # # Initially display the group creation GUI
-    # display_group_creation_gui()
-
-
-
-
-
-def UserProfile(UserID):
+def UserProfile(CompanyName,UserID):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
     global button_image_7,button_image_8,button_image_9,button_image_10,button_image_11,button_image_12
@@ -3461,7 +3465,7 @@ def UserProfile(UserID):
             image=button_image_5,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: GroupChatApplication(UserID),
+            command=lambda: GroupChatApplication(CompanyName,UserID),
             relief="flat"
         )
         button_5.place(
@@ -3888,8 +3892,10 @@ def Login(UserName,passcode):
 
     if user and user['Password'] == password:
         print("Login successful")
-        messagebox.showinfo('Login Successful','Welcome')
-        UserProfile(username)
+        messagebox.showinfo('Login Successful', 'Welcome')
+        Company_Name = user.get('CompanyName')  # Extracting CompanyName from the document
+        UserProfile(Company_Name,username)
+
     else:
         print("Login failed")
         messagebox.showerror('Login Failed','Invalid Input')
