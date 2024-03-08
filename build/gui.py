@@ -3052,29 +3052,46 @@ def GroupChatApplication(CompanyName,UserID):
         # Assuming GroupChatCollection is a collection object connected to MongoDB
 
         # Query documents from GroupChatCollection
-        group_chats = GroupChatCollection.find({"CreatedBy": UserID})
+        group_chats = GroupChatCollection.find({
+        "$or": [
+            {"CreatedBy": UserID},
+            {"SelectedUsers": UserID}
+        ]
+    })
 
         # Variables for positioning widgets
-        y_offset = 10  # Initial y-offset for placing widgets
+        y_offset = 45  # Initial y-offset for placing widgets
+        distance_between_rectangles = 10  # Adjust this value to set the distance between rectangles
+
+        # Function to execute when a rectangle is clicked
+        def on_rectangle_click(event, group_name):
+            # You can use the group name passed as an argument
+            print("Rectangle clicked for group:", group_name)
 
         # Iterate over documents
         for i, group_chat in enumerate(group_chats):
+            group_name = group_chat["GroupName"]  # Get the group name from the document
+            
             # Create rectangle
-            canvas.create_rectangle(
+            rectangle_id = canvas.create_rectangle(
                 4.0,
-                y_offset + 40 * i,  # Adjust y-offset for each group chat
+                y_offset + 40 * i + distance_between_rectangles * i,  # Adjust y-offset for each group chat
                 186.0,
-                y_offset + 40 * (i + 1),  # Adjust y-offset for each group chat
+                y_offset + 40 * (i + 1) + distance_between_rectangles * i,  # Adjust y-offset for each group chat
                 fill="#3A868F",
-                outline=""
+                outline="",
+                tags=("group_rectangle",)  # Add a tag to identify rectangles
             )
+            
+            # Bind the click event to the rectangle and pass the group name as an argument
+            canvas.tag_bind(rectangle_id, "<Button-1>", lambda event, name=group_name: on_rectangle_click(event, name))
             
             # Create text for group name
             canvas.create_text(
                 11.0,
-                y_offset + 20 + 40 * i,  # Adjust y-offset for each group chat
+                y_offset + 10 + 40 * i + distance_between_rectangles * i,  # Adjust y-offset for each group chat
                 anchor="nw",
-                text=group_chat["GroupName"],  # Get group name from document
+                text=group_name,  # Use the group name
                 fill="#FFFFFF",
                 font=("Libre Caslon Text", 12 * -1)
             )
@@ -3082,13 +3099,12 @@ def GroupChatApplication(CompanyName,UserID):
             # Create text for number of selected users
             canvas.create_text(
                 169.0,
-                y_offset + 20 + 40 * i,  # Adjust y-offset for each group chat
+                y_offset + 20 + 40 * i + distance_between_rectangles * i,  # Adjust y-offset for each group chat
                 anchor="nw",
                 text=str(len(group_chat["SelectedUsers"])),  # Get number of selected users from document
                 fill="#FFFFFF",
                 font=("Libre Caslon Text", 12 * -1)
             )
-
     
 
 
@@ -3198,7 +3214,7 @@ def GroupChatApplication(CompanyName,UserID):
     )
 
     canvas.place(x = 0, y = 0)
-    DisplayGroups()
+    
     canvas.create_rectangle(
         0.0,
         0.0,
@@ -3206,22 +3222,6 @@ def GroupChatApplication(CompanyName,UserID):
         39.0,
         fill="#3A868F",
         outline="")
-
-    # canvas.create_rectangle(
-    #     4.0,
-    #     43.0,
-    #     186.0,
-    #     81.0,
-    #     fill="#3A868F",
-    #     outline="")
-
-    # canvas.create_rectangle(
-    #     4.0,
-    #     87.0,
-    #     186.0,
-    #     125.0,
-    #     fill="#3A868F",
-    #     outline="")
 
     LeftFramePhotoImageGroupChat = PhotoImage(
         file=relative_to_assets("image_18.png"))
@@ -3255,46 +3255,11 @@ def GroupChatApplication(CompanyName,UserID):
         fill="#173054",
         font=("Libre Caslon Text", 14 * -1)
     )
-
-    # canvas.create_text(
-    #     169.0,
-    #     108.0,
-    #     anchor="nw",
-    #     text="5",
-    #     fill="#FFFFFF",
-    #     font=("Libre Caslon Text", 12 * -1)
-    # )
-
-    # canvas.create_text(
-    #     11.0,
-    #     92.0,
-    #     anchor="nw",
-    #     text="Group Name",
-    #     fill="#FFFFFF",
-    #     font=("Libre Caslon Text", 12 * -1)
-    # )
-
-    # canvas.create_text(
-    #     168.0,
-    #     64.0,
-    #     anchor="nw",
-    #     text="5",
-    #     fill="#FFFFFF",
-    #     font=("Libre Caslon Text", 12 * -1)
-    # )
-
-    # canvas.create_text(
-    #     10.0,
-    #     48.0,
-    #     anchor="nw",
-    #     text="Group Name",
-    #     fill="#FFFFFF",
-    #     font=("Libre Caslon Text", 12 * -1)
-    # )
-
+    
     # Right frame for group creation
     right_frame = tk.Frame(main_frame, width=320, height=450)
     right_frame.place(x=190, y=0)
+    DisplayGroups()
 
 def UserProfile(CompanyName,UserID):
 
