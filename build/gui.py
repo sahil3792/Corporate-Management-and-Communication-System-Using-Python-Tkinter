@@ -63,6 +63,7 @@ import pandas as pd
 import pickle
 from docx import Document
 import os
+from datetime import datetime
 
 # Get the directory path of the current Python script
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -3067,6 +3068,33 @@ def GroupChatApplication(CompanyName,UserID):
         def on_rectangle_click(event, group_name):
             global RightFrameBGImage,GroupChatMessageEntry,GroupChatSendMessageButton
             # You can use the group name passed as an argument
+            def on_send_message():
+                # Retrieve the message from the entry widget
+                message = entry_1.get()
+                sender = UserID  # Assuming the sender's username is fixed for now
+                message_listbox.insert(tk.END, f"{sender}: {message}")
+                
+                
+
+                # Store the message in the database
+                if GroupChatCollection.find_one({"GroupName": group_name}):
+                    # Group name exists, update the existing document
+                    GroupChatCollection.update_one(
+                        {"GroupName": group_name},
+                        {"$push": {
+                            "Messages": {
+                                "Sender": sender,
+                                "Content": message,
+                                "Timestamp": datetime.now()
+                            }
+                        }}
+                    )
+                    
+
+                
+
+                # Check if the group exists in the database
+                
             canvas = Canvas(
                 right_frame,
                 bg = "#173054",
@@ -3102,8 +3130,18 @@ def GroupChatApplication(CompanyName,UserID):
                 fill="#ECECD9",
                 outline="")
             
+
             message_listbox = Listbox(canvas, width=50, height=14)
             message_listbox.place(x=0,y=40)
+          
+            
+            def updateListbox(group_name):
+                group_messages = GroupChatCollection.find_one({"GroupName": group_name})
+                if group_messages and "Messages" in group_messages:
+                    for message in group_messages["Messages"]:
+                        sender = message["Sender"]
+                        content = message["Content"]
+                        message_listbox.insert(tk.END, f"{sender}: {content}")
 
             GroupChatMessageEntry = PhotoImage(
                 file=relative_to_assets("entry_55.png"))
@@ -3125,6 +3163,7 @@ def GroupChatApplication(CompanyName,UserID):
                 width=249.0,
                 height=27.0
             )
+            updateListbox(group_name)
 
             GroupChatSendMessageButton = PhotoImage(
                 file=relative_to_assets("button_38.png"))
@@ -3133,7 +3172,7 @@ def GroupChatApplication(CompanyName,UserID):
                 image=GroupChatSendMessageButton,
                 borderwidth=0,
                 highlightthickness=0,
-                command=lambda: print("button_1 clicked"),
+                command=lambda: on_send_message(),
                 relief="flat"
             )
             button_1.place(
