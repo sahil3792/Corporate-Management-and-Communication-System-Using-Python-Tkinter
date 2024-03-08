@@ -3065,7 +3065,92 @@ def GroupChatApplication(CompanyName,UserID):
 
         # Function to execute when a rectangle is clicked
         def on_rectangle_click(event, group_name):
+            global RightFrameBGImage,GroupChatMessageEntry,GroupChatSendMessageButton
             # You can use the group name passed as an argument
+            canvas = Canvas(
+                right_frame,
+                bg = "#173054",
+                height = 450,
+                width = 320,
+                bd = 0,
+                highlightthickness = 0,
+                relief = "ridge"
+            )
+
+            canvas.place(x = 0, y = 0)
+            RightFrameBGImage = PhotoImage(
+                file=relative_to_assets("image_19.png"))
+            image_1 = canvas.create_image(
+                160.0,
+                225.0,
+                image=RightFrameBGImage
+            )
+
+            canvas.create_rectangle(
+                0.0,
+                0.0,
+                320.0,
+                40.0,
+                fill="#ECECD9",
+                outline="")
+
+            canvas.create_rectangle(
+                0.0,
+                407.0,
+                320.0,
+                450.0,
+                fill="#ECECD9",
+                outline="")
+            
+            message_listbox = Listbox(canvas, width=50, height=14)
+            message_listbox.place(x=0,y=40)
+
+            GroupChatMessageEntry = PhotoImage(
+                file=relative_to_assets("entry_55.png"))
+            entry_bg_1 = canvas.create_image(
+                140.5,
+                428.5,
+                image=GroupChatMessageEntry
+            )
+            entry_1 = Entry(
+                canvas,
+                bd=0,
+                bg="#225777",
+                fg="#000716",
+                highlightthickness=0
+            )
+            entry_1.place(
+                x=16.0,
+                y=414.0,
+                width=249.0,
+                height=27.0
+            )
+
+            GroupChatSendMessageButton = PhotoImage(
+                file=relative_to_assets("button_38.png"))
+            button_1 = Button(
+                canvas,
+                image=GroupChatSendMessageButton,
+                borderwidth=0,
+                highlightthickness=0,
+                command=lambda: print("button_1 clicked"),
+                relief="flat"
+            )
+            button_1.place(
+                x=277.0,
+                y=411.0,
+                width=40.0,
+                height=36.0
+            )
+
+            canvas.create_text(
+                12.0,
+                0.0,
+                anchor="nw",
+                text="" +group_name,
+                fill="#173054",
+                font=("LibreCaslonText Regular", 16 * -1)
+            )
             print("Rectangle clicked for group:", group_name)
 
         # Iterate over documents
@@ -3216,10 +3301,26 @@ def GroupChatApplication(CompanyName,UserID):
     canvas.place(x = 0, y = 0)
     
     canvas.create_rectangle(
-        0.0,
-        0.0,
-        190.0,
-        39.0,
+    0.0,
+    0.0,
+    190.0,
+    39.0,
+    fill="#3A868F",
+    outline="")
+
+    canvas.create_rectangle(
+        4.0,
+        43.0,
+        186.0,
+        81.0,
+        fill="#3A868F",
+        outline="")
+
+    canvas.create_rectangle(
+        4.0,
+        87.0,
+        186.0,
+        125.0,
         fill="#3A868F",
         outline="")
 
