@@ -2244,23 +2244,47 @@ def display_notification():
 def join_meeting():
     # Function to handle joining the meeting
     print("Joining the meeting...")
-
-def connect_to_notification_server(invited_users_ipaddresses):
+def get_server_info():
+    
+    server_info = EmployeeCollection.find_one({})
+    video_server_ip = server_info.get("Videoserver_ip")
+    video_server_port = server_info.get("Videoserver_port")
+    
+    return video_server_ip, video_server_port
+def connect_to_notification_server():
     try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(('localhost', 9999))  # Connect to the server
-        data = "IP_ADDRESSES:" + ",".join(invited_users_ipaddresses)
-        client_socket.send(data.encode())  # Sending the list of invited user IP addresses
-        client_socket.close()
+        server_info = EmployeeCollection.find_one({})
+        video_server_ip = server_info.get("Videoserver_ip")
+        video_server_port = server_info.get("Videoserver_port")
+        # Get server IP address and port from configuration
+        server_ip = video_server_ip  # Replace with your server's IP address
+        server_port = video_server_port  # Port on which the server is listening
         
-        # Display notification window if the client's IP address is in the list
-        if socket.gethostbyname(socket.gethostname()) in invited_users_ipaddresses:
-            display_notification()
+        # Connect to the server
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((server_ip, server_port))
+        print("Connected to server successfully!")
+        return client_socket
     except Exception as e:
         print(f"Error connecting to server: {e}")
+        return None
+
 
 def JoinVideoConferencing(invited_user_ipaddress):
     global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
+    try:
+        # Send the list of invited user IP addresses to the server
+        data = "IP_ADDRESSES:" + ",".join(invited_user_ipaddress)
+        print(data)
+        client_socket.send(data.encode())
+        print("Invited user IP addresses sent to the server successfully!")
+
+        # Close the client socket
+        client_socket.close()
+    except Exception as e:
+        print(f"Error sending invited user IP addresses to the server: {e}")
+
+    
     def toggle_camera():
         global camera_on
         if camera_on:
@@ -2296,7 +2320,7 @@ def JoinVideoConferencing(invited_user_ipaddress):
 
     # Destroy previous frame
     DisplayCurrentUserFrameVideoCall.destroy()
-    connect_to_notification_server(invited_user_ipaddress)
+    connect_to_notification_server()
 
     # Create new frame for joining video conference
     JoinVideoConferenceFrame = Frame(window, width=510, height=450)
@@ -2404,7 +2428,9 @@ def InvitedUsersForVideoConferencing(username):
         print(invited_users_ipaddress)
     else:
         print(f"{username} is already invited.")
-      
+
+connect_to_notification_server()
+
 def Display_current_user_for_VideoCall(username):
     global VideoCallframe, VideoCallNextButton,DisplayCurrentUserFrameVideoCall
     DisplayCurrentUserFrameVideoCall = Frame(window,height=450, width=510)

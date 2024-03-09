@@ -15,7 +15,7 @@ EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
 server_ip =  socket.gethostbyname(socket.gethostname())  # Server's local IP address
 server_port = 12345  # Port to listen on
 
-EmployeeCollection.update_many({}, { "$set": { "server_ip": server_ip, "server_port": server_port } })
+EmployeeCollection.update_many({}, { "$set": { "Videoserver_ip": server_ip, "Videoserver_port": server_port } })
 
 def handle_client(client_socket, address):
     while True:

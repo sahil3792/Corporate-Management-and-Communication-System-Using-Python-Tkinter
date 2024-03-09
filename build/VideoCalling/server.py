@@ -1,6 +1,21 @@
 import socket
 import threading
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
+conn_str = "mongodb+srv://root:812003@cluster0.fshfquh.mongodb.net/?retryWrites=true&w=majority"
+client = MongoClient(conn_str, server_api=ServerApi('1'))
+AdminDatabase = client["AdminDatabase"]
+EmployeeDatabase = client["EmployeeDatabase"]
+
+AdminCollection = AdminDatabase["ManagerCollection"]
+EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
+
+# Server configuration
+server_ip =  socket.gethostbyname(socket.gethostname())  # Server's local IP address
+server_port = 9999  # Port to listen on
+
+EmployeeCollection.update_many({}, { "$set": { "Videoserver_ip": server_ip, "Videoserver_port": server_port } })
 # Global variable to store invited user IP addresses
 invited_user_ipaddresses = []
 
@@ -37,7 +52,7 @@ def send_notification(ip_address):
 
 def start_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 9999))  # Assuming port 9999 for server
+    server_socket.bind((server_ip, server_port))  # Assuming port 9999 for server
     server_socket.listen(5)
 
     print("Server started. Listening for connections...")
