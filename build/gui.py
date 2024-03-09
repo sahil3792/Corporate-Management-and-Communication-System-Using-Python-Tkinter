@@ -65,6 +65,7 @@ from docx import Document
 import os
 from datetime import datetime
 
+
 # Get the directory path of the current Python script
 script_dir = os.path.dirname(os.path.realpath(__file__))
 sub_dir = "assets\\frame0"
@@ -2226,12 +2227,162 @@ def get_ip_address_of_invited_users(invited_usernames):
         else:
             print(f"IP address for {username} not found in Employee collection.")
     return ip_addresses
+local_ip_address = socket.gethostbyname(socket.gethostname())
 
-def InvitedUsers(username):
+server = StreamingServer(local_ip_address, 9999)
+receiver = AudioReceiver(local_ip_address, 8888)
+
+def start_listening():
+    t1= threading.Thread(target=server.start_server)
+    t2= threading.Thread(target=receiver.start_server)
+    t1.start()
+    t2.start()
+
+def start_camera_stream():
+    camera_client = CameraClient(local_ip_address, 7777)
+    t3 = threading.Thread(target=camera_client.start_stream)
+    t3.start()
+
+
+# Function to toggle microphone on/off
+
+
+# Main function to create GUI
+def JoinVideoConferencing(invited_user_ipaddress):
+    global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
+    def toggle_camera():
+        global camera_on
+        if camera_on:
+            # Turn off camera
+            
+            # You can add the code to turn off the camera here
+            print("Camera turned off")
+            TurnOnCameraButton.config(image=TurnOnCameraOnImage)  # Change button image
+            camera_on = False
+        else:
+            # Turn on camera
+            
+            # You can add the code to turn on the camera here
+            print("Camera turned on")
+            TurnOnCameraButton.config(image=TurnOnCameraOffImage)  # Change button image
+            camera_on = True
+
+    
+    def toggle_microphone():
+        global mic_on
+        if mic_on:
+            # Turn off microphone
+            # You can add the code to turn off the microphone here
+            print("Microphone turned off")
+            TurnOnMicButton.config(image=TurnOnMicOnImage)  # Change button image
+            mic_on = False
+        else:
+            # Turn on microphone
+            # You can add the code to turn on the microphone here
+            print("Microphone turned on")
+            TurnOnMicButton.config(image=TurnOnMicOffImage)  # Change button image
+            mic_on = True
+
+    # Destroy previous frame
+    DisplayCurrentUserFrameVideoCall.destroy()
+
+    # Create new frame for joining video conference
+    JoinVideoConferenceFrame = Frame(window, width=510, height=450)
+    JoinVideoConferenceFrame.place(x=36, y=0)
+    canvas = Canvas(
+        JoinVideoConferenceFrame,
+        bg="#3A868F",
+        height=450,
+        width=510,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+    canvas.place(x=0, y=0)
+
+    JoinMeetingBackgroundImage = PhotoImage(file=relative_to_assets("image_20.png"))
+    image_1 = canvas.create_image(
+        255.0,
+        225.0,
+        image=JoinMeetingBackgroundImage
+    )
+
+    canvas.create_rectangle(
+        42.0,
+        20.0,
+        468.0,
+        293.0,
+        fill="#ECECD9",
+        outline="")
+
+    # Load images for camera and microphone buttons
+    TurnOnCameraOnImage = PhotoImage(file=relative_to_assets("button_40.png"))
+    TurnOnCameraOffImage = PhotoImage(file=relative_to_assets("button_43.png"))
+    TurnOnMicOnImage = PhotoImage(file=relative_to_assets("button_41.png"))
+    TurnOnMicOffImage = PhotoImage(file=relative_to_assets("button_44.png"))
+
+    # Set initial state for camera and microphone
+    camera_on = False
+    mic_on = False
+
+    # Create camera button
+    TurnOnCameraButton = Button(
+        canvas,
+        image=TurnOnCameraOnImage,  # Initial state is off
+        borderwidth=0,
+        highlightthickness=0,
+        command=toggle_camera,  # Bind toggle_camera function to button click event
+        relief="flat"
+    )
+    TurnOnCameraButton.place(
+        x=216.0,
+        y=307.0,
+        width=37.0,
+        height=37.0
+    )
+
+    # Create microphone button
+    TurnOnMicButton = Button(
+        canvas,
+        image=TurnOnMicOnImage,  # Initial state is off
+        borderwidth=0,
+        highlightthickness=0,
+        command=toggle_microphone,  # Bind toggle_microphone function to button click event
+        relief="flat"
+    )
+    TurnOnMicButton.place(
+        x=257.0,
+        y=307.0,
+        width=37.0,
+        height=37.0
+    )
+
+    JoinMeetingButton = PhotoImage(file=relative_to_assets("button_42.png"))
+    button_3 = Button(
+        canvas,
+        image=JoinMeetingButton,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_3 clicked"),
+        relief="flat"
+        )
+    button_3.place(
+        x=210.0,
+        y=374.0,
+        width=94.0,
+        height=35.0
+    )
+
+    print("----------------------")
+    print(invited_users_ipaddress)
+
+def InvitedUsersForVideoConferencing(username):
     global invited_users,invited_users_ipaddress
     
     # Check if the user is already invited
     if username not in invited_users:
+        NextButtonFrame = Frame(window,height=450, width=510)
+        NextButtonFrame.place(x=36 ,y=400)
         employee = EmployeeCollection.find_one({'UserName': username})
         invited_users.append(username)
         ip_address = employee.get('ip_address', "IP address not found")
@@ -2243,10 +2394,41 @@ def InvitedUsers(username):
         print(f"{username} is already invited.")
       
 def Display_current_user_for_VideoCall(username):
-    global VideoCallframe
-    VideoCallframe = customtkinter.CTkScrollableFrame(window, width=510, height=450)
-    VideoCallframe.pack(padx=(24, 104))
+    global VideoCallframe, VideoCallNextButton,DisplayCurrentUserFrameVideoCall
+    DisplayCurrentUserFrameVideoCall = Frame(window,height=450, width=510)
+    DisplayCurrentUserFrameVideoCall.place(x=36, y=0)
+    canvas = Canvas(
+    DisplayCurrentUserFrameVideoCall,
+    bg = "#3A868F",
+    height = 450,
+    width = 510,
+    bd = 0,
+    highlightthickness = 0,
+    relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    
+    VideoCallNextButton = PhotoImage(
+        file=relative_to_assets("button_39.png"))
+    button_1 = Button(
+        image=VideoCallNextButton,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: JoinVideoConferencing(invited_users_ipaddress),
+        relief="flat"
+    )
+    button_1.place(
+        x=210.0,
+        y=374.0,
+        width=94.0,
+        height=35.0
+    )
+    VideoCallframe = customtkinter.CTkScrollableFrame(canvas, width=318)
+    VideoCallframe.pack(padx=(0, 0))
     VideoCallframe.config(bg="#ECECD9", bd=0)
+    VideoCallframe.config(height=500)
+    
     #DirectMessageframe = customtkinter.CTkScrollableFrame(window, width=510, height=450)
     #DirectMessageframe.pack(padx=(36, 154), pady=0)
 
@@ -2285,11 +2467,13 @@ def Display_current_user_for_VideoCall(username):
         label = ttk.Label(user_frame, text=user)
         label.pack(side=tk.LEFT)
         
-        button = ttk.Button(user_frame, text="Invite", command=lambda u=user: InvitedUsers(u))
+        button = ttk.Button(user_frame, text="Invite", command=lambda u=user: InvitedUsersForVideoConferencing(u))
         button.pack(side=tk.RIGHT)
 
 def Display_current_user_for_direct_message(username):
     global DirectMessageframe
+    VideoCallframe.pack_forget()
+    window.update()
     DirectMessageframe = customtkinter.CTkScrollableFrame(window, width=510, height=450)
     DirectMessageframe.pack(padx=(24, 104))
     DirectMessageframe.config(bg="#ECECD9", bd=0)
@@ -2334,6 +2518,9 @@ def MailApplication():
     pass
 
 def PersonalChatGUI(selected_user,recipients_ip_address): 
+    DirectMessageframe.pack_forget()
+    VideoCallframe.pack_forget
+    window.update()
     global BackButton,MyMessage,SendMessageButton,message_listbox
     PersonalChatCanvas = Canvas(
     window,
@@ -3040,13 +3227,13 @@ def round_corners(image, radius):
     return result
 
 def GroupChatApplication(CompanyName,UserID):
-    global LeftFramePhotoImageGroupChat,CreateGroupChatButtonImage
+    global LeftFramePhotoImageGroupChat,CreateGroupChatButtonImage,GroupChatFrame
     # Main frame
-    main_frame = tk.Frame(window, width=510, height=450)
-    main_frame.place(x=36,y=0)
+    GroupChatFrame = tk.Frame(window, width=510, height=450)
+    GroupChatFrame.place(x=36,y=0)
     # Left frame for group chat label and search button
-    left_frame = tk.Frame(main_frame, width=190, height=450)
-    left_frame.place(x=0,y=0)
+    # left_frame = tk.Frame(GroupChatFrame, width=190, height=450)
+    # left_frame.place(x=0,y=0)
 
     created_groups = []
     def DisplayGroups():
@@ -3319,12 +3506,12 @@ def GroupChatApplication(CompanyName,UserID):
         submit_button.grid(row=7, column=0, columnspan=2, padx=10, pady=5)
 
     
-    # Main frame
-    main_frame = tk.Frame(window, width=510, height=450)
-    main_frame.place(x=36,y=0)
+    # # Main frame
+    # main_frame = tk.Frame(window, width=510, height=450)
+    # main_frame.place(x=36,y=0)
 
     # Left frame for group chat label and search button
-    left_frame = tk.Frame(main_frame, width=190, height=450)
+    left_frame = tk.Frame(GroupChatFrame, width=190, height=450)
     left_frame.place(x=0,y=0)
 
     canvas = Canvas(
@@ -3395,9 +3582,17 @@ def GroupChatApplication(CompanyName,UserID):
         fill="#173054",
         font=("Libre Caslon Text", 14 * -1)
     )
+    canvas.create_rectangle(
+    0.0,
+    0.0,
+    190.0,
+    39.0,
+    fill="#3A868F",
+    outline="")
+
     
     # Right frame for group creation
-    right_frame = tk.Frame(main_frame, width=320, height=450)
+    right_frame = tk.Frame(GroupChatFrame, width=320, height=450)
     right_frame.place(x=190, y=0)
     DisplayGroups()
 
