@@ -39,16 +39,22 @@ def handle_client(client_socket, address):
 
 def trigger_notification():
     for ip_address in invited_user_ipaddresses:
+        print("below is the ip address that will send notification to")
+        print(ip_address)
+        print("here in send notification")
         send_notification(ip_address)
 
 def send_notification(ip_address):
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((ip_address, 8888))  # Assuming port 8888 for client notifications
-        client_socket.send("Join the meeting".encode())  # Sending notification message
+        server_address = (server_ip, 9999)  # Assuming port 8888 for client notifications
+        client_socket.connect(server_address)
+        client_socket.send("Join the meeting".encode())  # Sending notification message to the client
         client_socket.close()
+        print(f"Notification sent to {ip_address}")
     except Exception as e:
         print(f"Error sending notification to {ip_address}: {e}")
+    
 
 def start_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

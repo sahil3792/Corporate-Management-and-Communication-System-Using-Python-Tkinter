@@ -64,6 +64,7 @@ import pickle
 from docx import Document
 import os
 from datetime import datetime
+import socket
 
 
 # Get the directory path of the current Python script
@@ -2241,6 +2242,23 @@ def display_notification():
     
     window.mainloop()
 
+def receive_message():
+    try:
+        server_info = EmployeeCollection.find_one({})
+        video_server_ip = server_info.get("Videoserver_ip")
+        video_server_port = server_info.get("Videoserver_port")
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((video_server_ip, 9999))  # Assuming port 8888 for client notifications
+        server_socket.listen(1)
+        while True:
+            client_socket, _ = server_socket.accept()
+            message = client_socket.recv(1024).decode()
+            if message == "Join the meeting":
+                display_notification()
+            client_socket.close()
+    except Exception as e:
+        print(f"Error receiving message: {e}")
+
 def join_meeting():
     # Function to handle joining the meeting
     print("Joining the meeting...")
@@ -2273,17 +2291,21 @@ def connect_to_notification_server():
 def JoinVideoConferencing(invited_user_ipaddress):
     global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
     try:
-        # Send the list of invited user IP addresses to the server
+        server_info = EmployeeCollection.find_one({})
+        server_ip = server_info.get("Videoserver_ip")
+        server_port = server_info.get("Videoserver_port")
         data = "IP_ADDRESSES:" + ",".join(invited_user_ipaddress)
-        print(data)
-        client_socket.send(data.encode())
-        print("Invited user IP addresses sent to the server successfully!")
-
-        # Close the client socket
-        client_socket.close()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect((server_ip, server_port))
+            client_socket.send(data.encode())
+            print("Invited user IP addresses sent to the server successfully!")
+    except ConnectionRefusedError:
+        print("Connection to the server was refused.")
+    except socket.timeout:
+        print("Connection to the server timed out.")
     except Exception as e:
-        print(f"Error sending invited user IP addresses to the server: {e}")
-
+        print(f"Error connecting to server: {e}")
+        
     
     def toggle_camera():
         global camera_on
@@ -2320,7 +2342,7 @@ def JoinVideoConferencing(invited_user_ipaddress):
 
     # Destroy previous frame
     DisplayCurrentUserFrameVideoCall.destroy()
-    connect_to_notification_server()
+    
 
     # Create new frame for joining video conference
     JoinVideoConferenceFrame = Frame(window, width=510, height=450)
