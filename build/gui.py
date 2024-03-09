@@ -2227,27 +2227,38 @@ def get_ip_address_of_invited_users(invited_usernames):
         else:
             print(f"IP address for {username} not found in Employee collection.")
     return ip_addresses
-local_ip_address = socket.gethostbyname(socket.gethostname())
 
-server = StreamingServer(local_ip_address, 9999)
-receiver = AudioReceiver(local_ip_address, 8888)
+def display_notification():
+    # Function to display the notification window
+    window = tk.Tk()
+    window.title("Notification")
+    
+    lbl_notification = tk.Label(window, text="Join Meeting")
+    lbl_notification.pack()
+    
+    btn_join = tk.Button(window, text="Join", command=join_meeting)
+    btn_join.pack()
+    
+    window.mainloop()
 
-def start_listening():
-    t1= threading.Thread(target=server.start_server)
-    t2= threading.Thread(target=receiver.start_server)
-    t1.start()
-    t2.start()
+def join_meeting():
+    # Function to handle joining the meeting
+    print("Joining the meeting...")
 
-def start_camera_stream():
-    camera_client = CameraClient(local_ip_address, 7777)
-    t3 = threading.Thread(target=camera_client.start_stream)
-    t3.start()
+def connect_to_notification_server(invited_users_ipaddresses):
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(('localhost', 9999))  # Connect to the server
+        data = "IP_ADDRESSES:" + ",".join(invited_users_ipaddresses)
+        client_socket.send(data.encode())  # Sending the list of invited user IP addresses
+        client_socket.close()
+        
+        # Display notification window if the client's IP address is in the list
+        if socket.gethostbyname(socket.gethostname()) in invited_users_ipaddresses:
+            display_notification()
+    except Exception as e:
+        print(f"Error connecting to server: {e}")
 
-
-# Function to toggle microphone on/off
-
-
-# Main function to create GUI
 def JoinVideoConferencing(invited_user_ipaddress):
     global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
     def toggle_camera():
@@ -2285,6 +2296,7 @@ def JoinVideoConferencing(invited_user_ipaddress):
 
     # Destroy previous frame
     DisplayCurrentUserFrameVideoCall.destroy()
+    connect_to_notification_server(invited_user_ipaddress)
 
     # Create new frame for joining video conference
     JoinVideoConferenceFrame = Frame(window, width=510, height=450)
