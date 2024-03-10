@@ -2245,11 +2245,31 @@ def display_notification():
     
     window.mainloop()
 
-def JoinVideoConferencing(invited_user_ipaddress):
+def JoinVideoConferencing(invited_user_ipaddress,UserName):
     global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
 
+    def send_notification(invited_user_ipaddress):
+        document = EmployeeCollection.find_one({})
+        SERVER_IP = document.get("NotificationServerIP")
+        SERVER_PORT = document.get("NotificationServerPort")
+        static_message = f"Join the Meeting. You are invited by {UserName}"
         
+        if not invited_user_ipaddress:
+            print("No recipient IP addresses provided")
+            return
+
+        try:
+            for recipient_ip in invited_user_ipaddress:
+                print(recipient_ip)
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((SERVER_IP, SERVER_PORT))
+                client_socket.send(f"{recipient_ip}:{static_message}".encode())
+                client_socket.close()
+            print("Notification sent successfully")
+        except Exception as e:
+            print(f"Failed to send notification: {e}")    
     
+    send_notification(invited_user_ipaddress)
     def toggle_camera():
         global camera_on
         if camera_on:
@@ -2416,7 +2436,7 @@ def Display_current_user_for_VideoCall(username):
         image=VideoCallNextButton,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: JoinVideoConferencing(invited_users_ipaddress),
+        command=lambda: JoinVideoConferencing(invited_users_ipaddress,username),
         relief="flat"
     )
     button_1.place(
@@ -3968,6 +3988,49 @@ def UserProfile(CompanyName,UserID):
         if existing_user:
             # Update the existing document with the new IP address
             EmployeeCollection.update_one({"UserName": UserID}, {"$set": {"ip_address": ip_address}})
+
+        def receive_notifications():
+            try:
+                document = EmployeeCollection.find_one({})
+                SERVER_IP = document.get("NotificationServerIP")
+                SERVER_PORT = document.get("NotificationServerPort")
+                static_message = f"Join the Meeting. You are invited by {UserID}"
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((SERVER_IP, SERVER_PORT))
+                while True:
+                    message = client_socket.recv(1024).decode()
+                    if message:
+                        if message.startswith(static_message):
+                            user_invited_by = message.split("by ", 1)[1]
+                            print(f"Invited by: {user_invited_by}")
+                        messagebox.showinfo("Notification", f"Received: {message}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to receive notification: {e}")
+
+        # Start receiving notifications in a separate thread
+        receive_thread = threading.Thread(target=receive_notifications)
+        receive_thread.start()
+
+def receive_notifications():
+    try:
+        document = EmployeeCollection.find_one({})
+        SERVER_IP = document.get("NotificationServerIP")
+        SERVER_PORT = document.get("NotificationServerPort")
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((SERVER_IP, SERVER_PORT))
+        while True:
+            message = client_socket.recv(1024).decode()
+            if message:
+                user_invited_by = message.split("by ", 1)[1]
+                print(f"Invited by: {user_invited_by}")
+                messagebox.showinfo("Notification", f"Received: {message}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to receive notification: {e}")
+
+# Start receiving notifications in a separate thread
+receive_thread = threading.Thread(target=receive_notifications)
+receive_thread.start()
+
 def check_username(UserName):
     existing_user = EmployeeCollection.find_one({"UserName": UserName})
     return existing_user is not None
