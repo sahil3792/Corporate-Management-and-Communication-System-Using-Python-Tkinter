@@ -2256,6 +2256,13 @@ def get_server_info():
     return video_server_ip, video_server_port
 def connect_to_notification_server(UserID):
     try:
+        existing_document = EmployeeCollection.find_one({'UserName': UserID})
+        client_port = client_socket.getsockname()[1]  
+
+        if existing_document:
+            # Update the existing document with the client port number
+            EmployeeCollection.update_one({'UserName': UserID}, {'$set': {'ClientPortNumber': client_port}})
+            
         server_info = EmployeeCollection.find_one({})
         video_server_ip = server_info.get("Videoserver_ip")
         video_server_port = server_info.get("Videoserver_port")
