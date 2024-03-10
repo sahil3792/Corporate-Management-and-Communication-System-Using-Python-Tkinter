@@ -2242,22 +2242,7 @@ def display_notification():
     
     window.mainloop()
 
-def receive_message():
-    try:
-        server_info = EmployeeCollection.find_one({})
-        video_server_ip = server_info.get("Videoserver_ip")
-        video_server_port = server_info.get("Videoserver_port")
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind((video_server_ip, 9999))  # Assuming port 8888 for client notifications
-        server_socket.listen(1)
-        while True:
-            client_socket, _ = server_socket.accept()
-            message = client_socket.recv(1024).decode()
-            if message == "Join the meeting":
-                display_notification()
-            client_socket.close()
-    except Exception as e:
-        print(f"Error receiving message: {e}")
+
 
 def join_meeting():
     # Function to handle joining the meeting
@@ -3660,6 +3645,7 @@ def UserProfile(CompanyName,UserID):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
     global button_image_7,button_image_8,button_image_9,button_image_10,button_image_11,button_image_12
+    
     user_data = EmployeeCollection.find_one({"UserName": UserID})
     if user_data and "photo" in user_data:
         photo_data_base64 = user_data["photo"]
@@ -4025,6 +4011,34 @@ def UserProfile(CompanyName,UserID):
             fill="#FFFFFF",
             font=("LibreCaslonText Regular", 12 * -1)
         )
+        def receive_notification():
+            try:
+                document = EmployeeCollection.find_one({'UserName': UserID})
+                client_port = document.get('ClientPortNumber')
+                server_info = EmployeeCollection.find_one({})
+                video_server_ip = server_info.get("Videoserver_ip")
+                video_server_port = server_info.get("Videoserver_port")
+                server_ip = video_server_ip  # Replace with your server's IP address
+                server_port =  client_port # Port on which the server sends notifications (ensure it's an integer)
+                
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((server_ip, server_port))
+
+                while True:
+                    # Receive the notification message from the server
+                    message = client_socket.recv(1024).decode()
+                    print("Notification from server:", message)
+                    
+                    # You can trigger any action based on the received message
+                    
+            except Exception as e:
+                print(f"Error receiving notification from server: {e}")
+            finally:
+                client_socket.close()
+
+    # Start receiving notifications in a separate thread
+    notification_thread = threading.Thread(target=receive_notification)
+    notification_thread.start()
 
 def check_username(UserName):
     existing_user = EmployeeCollection.find_one({"UserName": UserName})
