@@ -2254,7 +2254,7 @@ def get_server_info():
     video_server_port = server_info.get("Videoserver_port")
     
     return video_server_ip, video_server_port
-def connect_to_notification_server():
+def connect_to_notification_server(UserID):
     try:
         server_info = EmployeeCollection.find_one({})
         video_server_ip = server_info.get("Videoserver_ip")
@@ -2436,7 +2436,7 @@ def InvitedUsersForVideoConferencing(username):
     else:
         print(f"{username} is already invited.")
 
-connect_to_notification_server()
+
 
 def Display_current_user_for_VideoCall(username):
     global VideoCallframe, VideoCallNextButton,DisplayCurrentUserFrameVideoCall
@@ -4011,6 +4011,7 @@ def UserProfile(CompanyName,UserID):
             fill="#FFFFFF",
             font=("LibreCaslonText Regular", 12 * -1)
         )
+        connect_to_notification_server(UserID)
         def receive_notification():
             try:
                 document = EmployeeCollection.find_one({'UserName': UserID})
