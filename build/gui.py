@@ -2245,61 +2245,9 @@ def display_notification():
     
     window.mainloop()
 
-
-
-def join_meeting():
-    # Function to handle joining the meeting
-    print("Joining the meeting...")
-def get_server_info():
-    
-    server_info = EmployeeCollection.find_one({})
-    video_server_ip = server_info.get("Videoserver_ip")
-    video_server_port = server_info.get("Videoserver_port")
-    
-    return video_server_ip, video_server_port
-def connect_to_notification_server(UserID):
-    try:
-        existing_document = EmployeeCollection.find_one({'UserName': UserID})
-        client_port = client_socket.getsockname()[1]  
-
-        if existing_document:
-            # Update the existing document with the client port number
-            EmployeeCollection.update_one({'UserName': UserID}, {'$set': {'ClientPortNumber': client_port}})
-            
-        server_info = EmployeeCollection.find_one({})
-        video_server_ip = server_info.get("Videoserver_ip")
-        video_server_port = server_info.get("Videoserver_port")
-        # Get server IP address and port from configuration
-        server_ip = video_server_ip  # Replace with your server's IP address
-        server_port = video_server_port  # Port on which the server is listening
-        
-        # Connect to the server
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((server_ip, server_port))
-        print("Connected to server successfully!")
-        return client_socket
-    except Exception as e:
-        print(f"Error connecting to server: {e}")
-        return None
-
-
 def JoinVideoConferencing(invited_user_ipaddress):
     global TurnOnMicButton, TurnOnCameraButton, JoinMeetingButton, JoinMeetingBackgroundImage, camera_on, mic_on,TurnOnMicOffImage,TurnOnMicOnImage,TurnOnCameraOffImage,TurnOnCameraOnImage
-    try:
-        server_info = EmployeeCollection.find_one({})
-        server_ip = server_info.get("Videoserver_ip")
-        server_port = server_info.get("Videoserver_port")
-        data = "IP_ADDRESSES:" + ",".join(invited_user_ipaddress)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-            client_socket.connect((server_ip, server_port))
-            client_socket.send(data.encode())
-            print("Invited user IP addresses sent to the server successfully!")
-    except ConnectionRefusedError:
-        print("Connection to the server was refused.")
-    except socket.timeout:
-        print("Connection to the server timed out.")
-    except Exception as e:
-        print(f"Error connecting to server: {e}")
+
         
     
     def toggle_camera():
@@ -2446,8 +2394,6 @@ def InvitedUsersForVideoConferencing(username):
     else:
         print(f"{username} is already invited.")
 
-
-
 def Display_current_user_for_VideoCall(username):
     global VideoCallframe, VideoCallNextButton,DisplayCurrentUserFrameVideoCall
     DisplayCurrentUserFrameVideoCall = Frame(window,height=450, width=510)
@@ -2483,12 +2429,6 @@ def Display_current_user_for_VideoCall(username):
     VideoCallframe.pack(padx=(0, 0))
     VideoCallframe.config(bg="#ECECD9", bd=0)
     VideoCallframe.config(height=500)
-    
-    #DirectMessageframe = customtkinter.CTkScrollableFrame(window, width=510, height=450)
-    #DirectMessageframe.pack(padx=(36, 154), pady=0)
-
-    #main_frame = ttk.Frame(window, padding=10)
-    #main_frame.pack(fill=tk.BOTH, expand=True)
     
     # Function to handle button click
     users = [doc["UserName"] for doc in EmployeeCollection.find({"UserName":{"$ne": username}},{'_id':0,'UserName':1})]
@@ -2526,8 +2466,8 @@ def Display_current_user_for_VideoCall(username):
         button.pack(side=tk.RIGHT)
 
 def Display_current_user_for_direct_message(username):
-    global DirectMessageframe
-    VideoCallframe.pack_forget()
+    global DirectMessageframe, VideoCallframe
+    
     window.update()
     DirectMessageframe = customtkinter.CTkScrollableFrame(window, width=510, height=450)
     DirectMessageframe.pack(padx=(24, 104))
@@ -2574,7 +2514,7 @@ def MailApplication():
 
 def PersonalChatGUI(selected_user,recipients_ip_address): 
     DirectMessageframe.pack_forget()
-    VideoCallframe.pack_forget
+    
     window.update()
     global BackButton,MyMessage,SendMessageButton,message_listbox
     PersonalChatCanvas = Canvas(
@@ -4021,38 +3961,13 @@ def UserProfile(CompanyName,UserID):
             fill="#FFFFFF",
             font=("LibreCaslonText Regular", 12 * -1)
         )
-        connect_to_notification_server(UserID)
-        def receive_notification():
-            try:
-                document = EmployeeCollection.find_one({'UserName': UserID})
-                client_port = document.get('ClientPortNumber')
-                server_info = EmployeeCollection.find_one({})
-                video_server_ip = server_info.get("Videoserver_ip")
-                video_server_port = server_info.get("Videoserver_port")
-                server_ip = video_server_ip  # Replace with your server's IP address
-                server_port = 9999  # Port on which the server sends notifications (ensure it's an integer)
-
-                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client_socket.connect((server_ip, server_port))
-
-                while True:
-                    # Receive the notification message from the server
-                    message = client_socket.recv(1024).decode()
-                    print("Notification from server:", message)
-                    
-                    # You can trigger any action based on the received message
-
-            except Exception as e:
-                logging.exception("Error receiving notification from server")
-            finally:
-                client_socket.close()
-
-    # Configure logging
-    logging.basicConfig(level=logging.DEBUG)
-    # Start receiving notifications in a separate thread
-    notification_thread = threading.Thread(target=receive_notification)
-    notification_thread.start()
-
+        ip_address = socket.gethostbyname(socket.gethostname())
+    
+        # Check if the username already exists in the collection
+        existing_user = EmployeeCollection.find_one({"UserName": UserID})
+        if existing_user:
+            # Update the existing document with the new IP address
+            EmployeeCollection.update_one({"UserName": UserID}, {"$set": {"ip_address": ip_address}})
 def check_username(UserName):
     existing_user = EmployeeCollection.find_one({"UserName": UserName})
     return existing_user is not None
@@ -4072,23 +3987,6 @@ def SignUpAuth(entry_1,entry_2,entry_3,entry_4):
         PersonalDetailForm(CompanyName,username,password)
     else:
         messagebox.showerror('Invalid',"Passwords don't match")
-
-def fetch_company_names():
-    global client  # Make sure client is defined globally
-
-    try:
-        # Access the specified database
-        company_database = client[company_db_name]
-        # Construct the collection name
-        collection_name = f"{company_db_name}_Collection"
-        # Access the specified collection
-        company_collection = company_database[collection_name]
-        # Fetch company names from the specified collection
-        allrecord = [doc["CompanyName"] for doc in company_collection.find({}, {'_id': 0, 'CompanyName': 1})]
-        return allrecord
-    except Exception as e:
-        print("An error occurred while fetching company names:", e)
-        return []
 
 def SignUp():
     global image_image_1,entry_image_1,entry_image_2,entry_image_3,entry_image_4,button_image_1, entry_2, entry_3

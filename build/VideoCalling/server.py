@@ -16,35 +16,30 @@ server_ip =  socket.gethostbyname(socket.gethostname())  # Server's local IP add
 server_port = 9999  # Port to listen on
 
 EmployeeCollection.update_many({}, { "$set": { "Videoserver_ip": server_ip, "Videoserver_port": server_port } })
-
-# Global variable to store invited user IP addresses
-invited_user_ipaddresses = []
-connected_clients = set()
-
 def handle_client(client_socket, address):
-    global invited_user_ipaddresses, connected_clients
+    global invited_user_ipaddresses, connected_clients, notification_ports
+    
+    # Add the client's IP address to the set of connected clients
     connected_clients.add(address[0])
+    
     try:
-        print("invited users ipaddress = ",invited_user_ipaddresses)
         # Receive data from the client
         data = client_socket.recv(1024).decode()
         
         # If the received data is a list of IP addresses
         if data.startswith("IP_ADDRESSES:"):
-            # Extract the IP addresses from the data
-            ip_addresses = data.split(":")[1].split(",")
-            print(ip_addresses)
+            # Extract the IP addresses from the data and store them
+            ip_addresses = set(data.split(":")[1].split(","))
+            invited_user_ipaddresses.update(ip_addresses)
+            print("Invited users:", invited_user_ipaddresses)
             
-            # Store the IP addresses in the global variable
-            invited_user_ipaddresses = ip_addresses
-            print(f"Invited users: {invited_user_ipaddresses}")
-            for ip_address in invited_user_ipaddresses:
-                # Check if the client's IP address is in the list of invited users
+            # Send notifications to clients whose IP addresses are in the list
+            for ip_address in ip_addresses:
                 if ip_address in connected_clients:
-                    print(f"Notification sent to {ip_address}")
                     send_notification(ip_address)
                 else:
                     print(f"{ip_address} is not connected to the server.")
+    
     except Exception as e:
         print(f"Error handling client {address}: {e}")
     finally:
@@ -52,31 +47,33 @@ def handle_client(client_socket, address):
         client_socket.close()
 
 def send_notification(ip_address):
+    global notification_ports
+    
     try:
-        document = EmployeeCollection.find_one({'ip_address': ip_address})
-        if document:
-            # If a document is found, read the corresponding ClientPortNumber value
-            client_port = document.get('ClientPortNumber')
-            print(f"Client port number for IP address {ip_address}: {client_port}")
-            
-            # Connect to the client's notification port
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = (ip_address, client_port)
-            client_socket.connect(server_address)
-            
-            # Send the notification message
-            client_socket.send("Join the meeting".encode())
-            client_socket.close()
-            
-            print(f"Notification sent to {ip_address}")
-        else:
-            print(f"No document found for IP address {ip_address}")
+        # Get the notification port for the client
+        notification_port = notification_ports.get(ip_address)
+        if notification_port is None:
+            print(f"No notification port found for {ip_address}")
+            return
+        
+        # Connect to the client's notification port and send the message
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(('localhost', notification_port))
+        client_socket.send("Join the meeting".encode())
+        client_socket.close()
+        
+        print(f"Notification sent to {ip_address}")
     except Exception as e:
         print(f"Error sending notification to {ip_address}: {e}")
 
 def start_server():
+    global notification_ports
+    
+    server_ip = 'localhost'  # Server's IP address
+    server_port = 9999  # Port to listen on
+    
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((server_ip, server_port))  # Bind to the server IP and port
+    server_socket.bind((server_ip, server_port))
     server_socket.listen(5)
 
     print("Server started. Listening for connections...")
