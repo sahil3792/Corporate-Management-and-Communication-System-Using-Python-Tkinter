@@ -66,6 +66,9 @@ import os
 from datetime import datetime
 import socket
 
+import threading
+import logging
+
 
 # Get the directory path of the current Python script
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -4027,8 +4030,8 @@ def UserProfile(CompanyName,UserID):
                 video_server_ip = server_info.get("Videoserver_ip")
                 video_server_port = server_info.get("Videoserver_port")
                 server_ip = video_server_ip  # Replace with your server's IP address
-                server_port =  client_port # Port on which the server sends notifications (ensure it's an integer)
-                
+                server_port = 9999  # Port on which the server sends notifications (ensure it's an integer)
+
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client_socket.connect((server_ip, server_port))
 
@@ -4038,12 +4041,14 @@ def UserProfile(CompanyName,UserID):
                     print("Notification from server:", message)
                     
                     # You can trigger any action based on the received message
-                    
+
             except Exception as e:
-                print(f"Error receiving notification from server: {e}")
+                logging.exception("Error receiving notification from server")
             finally:
                 client_socket.close()
 
+    # Configure logging
+    logging.basicConfig(level=logging.DEBUG)
     # Start receiving notifications in a separate thread
     notification_thread = threading.Thread(target=receive_notification)
     notification_thread.start()
