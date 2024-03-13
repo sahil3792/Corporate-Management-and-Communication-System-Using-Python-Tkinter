@@ -1280,7 +1280,92 @@ def VideoConferencing():
     window.after(1000, start_camera_stream)
 
 def Todo():
-    import todo
+    TodoListMainFrame = Frame(window, height=450, width=510)
+    TodoListMainFrame.place(x=36,y=0)
+    canvas = Canvas(
+    TodoListMainFrame,
+    bg = "#3A868F",
+    height = 450,
+    width = 510,
+    bd = 0,
+    highlightthickness = 0,
+    relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    image_image_1 = PhotoImage(
+    file=relative_to_assets("image_1.png"))
+    image_1 = canvas.create_image(
+        255.0,
+        225.0,
+        image=image_image_1
+    )
+
+    button_image_1 = PhotoImage(
+        file=relative_to_assets("button_1.png"))
+    button_1 = Button(
+        image=button_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_1 clicked"),
+        relief="flat"
+    )
+    button_1.place(
+        x=404.0,
+        y=11.0,
+        width=91.0,
+        height=31.0
+    )
+
+    button_image_2 = PhotoImage(
+        file=relative_to_assets("button_2.png"))
+    button_2 = Button(
+        image=button_image_2,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_2 clicked"),
+        relief="flat"
+    )
+    button_2.place(
+        x=441.0,
+        y=72.0,
+        width=20.0,
+        height=20.0
+    )
+
+    canvas.create_rectangle(
+        42.0,
+        68.0,
+        467.0,
+        97.0,
+        fill="#173054",
+        outline="")
+
+    canvas.create_text(
+        42.0,
+        46.0,
+        anchor="nw",
+        text="13th March 2024 Time",
+        fill="#173054",
+        font=("LibreCaslonText Regular", 13 * -1)
+    )
+
+    canvas.create_rectangle(
+        51.0,
+        76.0,
+        63.0,
+        88.0,
+        fill="#000000",
+        outline="")
+
+    canvas.create_text(
+        77.0,
+        68.0,
+        anchor="nw",
+        text="Display the Task here",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 13 * -1)
+    )
 
 def TextEditor():
     import Text    
@@ -3871,7 +3956,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_7,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_19 clicked"),
+            command=lambda: Todo(),
             relief="flat"
         )
         button_7.place(
