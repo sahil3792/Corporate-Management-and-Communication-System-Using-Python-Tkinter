@@ -2245,7 +2245,7 @@ def display_notification():
     
     window.mainloop()
 
-def JoinMeeting(username):
+def JoinMeetingHost(username,invited_user_ipaddress):
    
     host_meeting_window = tk.Tk()
     host_meeting_window.title('Host Meeting')
@@ -2293,8 +2293,7 @@ def JoinMeeting(username):
     label_target_ip = tk.Label(window, text="Target IPs (separated by comma):")
     label_target_ip.pack()
 
-    text_target_ip = tk.Text(window, height=4)
-    text_target_ip.pack()
+    text_target_ip = invited_user_ipaddress
 
     btn_listen = tk.Button(window, text="Start Listening", width=50, command=start_listening)
     btn_listen.pack(anchor=tk.CENTER, expand=True)
@@ -2443,7 +2442,7 @@ def JoinVideoConferencing(invited_user_ipaddress,UserName):
         image=JoinMeetingButton,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda:JoinMeeting(),
+        command=lambda:JoinMeetingHost(UserName,invited_user_ipaddress),
         relief="flat"
         )
     button_3.place(
@@ -4070,6 +4069,58 @@ def UserProfile(CompanyName,UserID):
         receive_thread = threading.Thread(target=receive_notifications)
         receive_thread.start()
 
+def JoinMeetingClient(UserName):
+    local_ip_address = socket.gethostbyname(socket.gethostname())
+
+    server = StreamingServer(local_ip_address, 7777)
+    receiver = AudioReceiver(local_ip_address, 6666)
+
+    def start_listening():
+        t1= threading.Thread(target=server.start_server)
+        t2= threading.Thread(target=receiver.start_server)
+        t1.start()
+        t2.start()
+
+
+    def start_camera_stream():
+        camera_client = CameraClient(text_target_ip.get(1.0,'end-1c'),9999)
+        t3 = threading.Thread(target=camera_client.start_stream)
+        t3.start()
+
+    def start_screen_sharing():
+        screen_client = ScreenShareClient(text_target_ip.get(1.0,'end-1c'),9999)
+        t4 = threading.Thread(target=screen_client.start_stream)
+        t4.start()
+
+    def start_audio_stream():
+        audio_sender = AudioSender(text_target_ip.get(1.0,'end-1c'),8888)
+        t5 = threading.Thread(target=audio_sender.start_stream)
+        t5.start()
+    #GUI
+
+    window = tk.Tk()
+    window.title('video conference')
+    window.geometry('300x300')
+
+    label_target_ip = tk.Label(window, text="target IP:")
+    label_target_ip.pack()
+
+    employee = EmployeeCollection.find_one({'UserName': UserName})
+    text_target_ip = employee.get("ip_address")
+
+    btn_listen = tk.Button(window,text="Start listening", width=50, command=start_listening)
+    btn_listen.pack(anchor=tk.CENTER,expand=True)
+
+    btn_camera = tk.Button(window,text="Start Camera stream", width=50, command=start_camera_stream)
+    btn_camera.pack(anchor=tk.CENTER,expand=True)
+
+    btn_screen = tk.Button(window,text="Start screen sharing", width=50, command=start_screen_sharing)
+    btn_screen.pack(anchor=tk.CENTER,expand=True)
+
+    btn_audio = tk.Button(window,text="Start Audio Stream", width=50, command=start_audio_stream)
+    btn_audio.pack(anchor=tk.CENTER,expand=True)
+
+
 def receive_notifications():
     try:
         document = EmployeeCollection.find_one({})
@@ -4084,7 +4135,7 @@ def receive_notifications():
                 print(f"Invited by: {user_invited_by}")
                 messagebox.showinfo("Notification", f"Received: {message}")
                 print(user_invited_by)
-                JoinMeeting(user_invited_by)
+                JoinMeetingClient(user_invited_by)
     except Exception as e:
         messagebox.showerror("Error", f"Failed to receive notification: {e}")
 
