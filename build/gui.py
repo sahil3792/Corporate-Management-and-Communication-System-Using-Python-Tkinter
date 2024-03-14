@@ -65,7 +65,10 @@ from docx import Document
 import os
 from datetime import datetime
 import socket
-
+from tkcalendar import Calendar  # Install tkcalendar via pip: pip install tkcalendar
+from datetime import datetime
+import pymongo
+from bson.objectid import ObjectId
 import threading
 import logging
 
@@ -1279,9 +1282,88 @@ def VideoConferencing():
     btn_audio.pack(anchor=tk.CENTER,expand=True)
     window.after(1000, start_camera_stream)
 
-def Todo():
+def Todo(UserName):
+    global DeleteTaskButton,AddTaskButton, TodoListBGImage
     TodoListMainFrame = Frame(window, height=450, width=510)
     TodoListMainFrame.place(x=36,y=0)
+    def add_task():
+        def submit_task():
+            due_date = due_date_calendar.get_date()
+            due_time = f"{hours_var.get()}:{minutes_var.get()}"
+            task = task_entry.get()
+            username = "UserName"  # You should replace "UserName" with the actual username
+
+            if due_date and task:
+                task_data = {
+                    "_id": str(ObjectId()),
+                    "username": username,
+                    "due_date": due_date,
+                    "due_time": due_time,
+                    "task_details": task
+                }
+                EmployeeCollection.insert_one(task_data)
+                new_window.destroy()
+                display_tasks()
+            else:
+                messagebox.showwarning("Warning", "Please enter both due date and task details.")
+
+        new_window = tk.Toplevel()
+        new_window.title("Add Task")
+
+        due_date_label = tk.Label(new_window, text="Due Date:")
+        due_date_label.grid(row=0, column=0, padx=10, pady=5)
+
+        due_date_calendar = Calendar(new_window, selectmode="day",
+                                    year=datetime.now().year, month=datetime.now().month,
+                                    day=datetime.now().day)
+        due_date_calendar.grid(row=0, column=1, padx=10, pady=5)
+
+        time_frame = ttk.Frame(new_window)
+        time_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
+
+        hours_var = tk.StringVar()
+        hours_label = tk.Label(time_frame, text="Hours:")
+        hours_label.grid(row=0, column=0, padx=5, pady=5)
+        hours_dropdown = ttk.Combobox(time_frame, textvariable=hours_var, values=[str(i).zfill(2) for i in range(24)])
+        hours_dropdown.current(0)
+        hours_dropdown.grid(row=0, column=1, padx=5, pady=5)
+
+        minutes_var = tk.StringVar()
+        minutes_label = tk.Label(time_frame, text="Minutes:")
+        minutes_label.grid(row=0, column=2, padx=5, pady=5)
+        minutes_dropdown = ttk.Combobox(time_frame, textvariable=minutes_var, values=[str(i).zfill(2) for i in range(60)])
+        minutes_dropdown.current(0)
+        minutes_dropdown.grid(row=0, column=3, padx=5, pady=5)
+
+        task_label = tk.Label(new_window, text="Task:")
+        task_label.grid(row=2, column=0, padx=10, pady=5)
+        task_entry = tk.Entry(new_window)
+        task_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        submit_button = tk.Button(new_window, text="Submit", command=submit_task)
+        submit_button.grid(row=3, columnspan=2, padx=10, pady=10)
+
+
+    def display_tasks():
+        username = UserName  # You should replace "UserName" with the actual username
+        tasks = EmployeeCollection.find({"UserName": username}).sort([("due_date", pymongo.ASCENDING), ("due_time", pymongo.ASCENDING)])
+        y_position = 100  # Initial y-position for placing the widgets
+        for task in tasks:
+            task_info = f"{task['due_date']} {task['due_time']}"
+            
+            # Creating the widgets
+            delete_button = tk.Button(TodoListMainFrame, image=DeleteTaskButton, borderwidth=0, highlightthickness=0,
+                                    command=lambda: print("Delete button clicked"), relief="flat")
+            task_label = tk.Label(TodoListMainFrame, text=task_info, font=("LibreCaslonText Regular", 13), anchor="nw")
+            task_detail_label = tk.Label(TodoListMainFrame, text=task['task_details'], font=("LibreCaslonText Regular", 13), anchor="nw")
+
+            # Placing the widgets
+            delete_button.place(x=441.0, y=y_position - 28, width=20.0, height=20.0)
+            task_label.place(x=42.0, y=y_position, anchor="nw")
+            task_detail_label.place(x=77.0, y=y_position + 8, anchor="nw")
+
+            y_position += 50
+
     canvas = Canvas(
     TodoListMainFrame,
     bg = "#3A868F",
@@ -1293,21 +1375,22 @@ def Todo():
     )
 
     canvas.place(x = 0, y = 0)
-    image_image_1 = PhotoImage(
-    file=relative_to_assets("image_1.png"))
+    TodoListBGImage = PhotoImage(
+    file=relative_to_assets("image_21.png"))
     image_1 = canvas.create_image(
         255.0,
         225.0,
-        image=image_image_1
+        image=TodoListBGImage
     )
 
-    button_image_1 = PhotoImage(
-        file=relative_to_assets("button_1.png"))
+    AddTaskButton = PhotoImage(
+        file=relative_to_assets("button_45.png"))
     button_1 = Button(
-        image=button_image_1,
+        TodoListMainFrame,
+        image=AddTaskButton,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: add_task(),
         relief="flat"
     )
     button_1.place(
@@ -1317,55 +1400,56 @@ def Todo():
         height=31.0
     )
 
-    button_image_2 = PhotoImage(
-        file=relative_to_assets("button_2.png"))
-    button_2 = Button(
-        image=button_image_2,
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
-        relief="flat"
-    )
-    button_2.place(
-        x=441.0,
-        y=72.0,
-        width=20.0,
-        height=20.0
-    )
+    # DeleteTaskButton = PhotoImage(
+    #     file=relative_to_assets("button_46.png"))
+    # button_2 = Button(
+    #     TodoListMainFrame,
+    #     image=DeleteTaskButton,
+    #     borderwidth=0,
+    #     highlightthickness=0,
+    #     command=lambda: print("button_2 clicked"),
+    #     relief="flat"
+    # )
+    # button_2.place(
+    #     x=441.0,
+    #     y=72.0,
+    #     width=20.0,
+    #     height=20.0
+    # )
 
-    canvas.create_rectangle(
-        42.0,
-        68.0,
-        467.0,
-        97.0,
-        fill="#173054",
-        outline="")
+    # canvas.create_rectangle(
+    #     42.0,
+    #     68.0,
+    #     467.0,
+    #     97.0,
+    #     fill="#173054",
+    #     outline="")
 
-    canvas.create_text(
-        42.0,
-        46.0,
-        anchor="nw",
-        text="13th March 2024 Time",
-        fill="#173054",
-        font=("LibreCaslonText Regular", 13 * -1)
-    )
+    # canvas.create_text(
+    #     42.0,
+    #     46.0,
+    #     anchor="nw",
+    #     text="13th March 2024 Time",
+    #     fill="#173054",
+    #     font=("LibreCaslonText Regular", 13 * -1)
+    # )
 
-    canvas.create_rectangle(
-        51.0,
-        76.0,
-        63.0,
-        88.0,
-        fill="#000000",
-        outline="")
+    # canvas.create_rectangle(
+    #     51.0,
+    #     76.0,
+    #     63.0,
+    #     88.0,
+    #     fill="#000000",
+    #     outline="")
 
-    canvas.create_text(
-        77.0,
-        68.0,
-        anchor="nw",
-        text="Display the Task here",
-        fill="#ECECD9",
-        font=("LibreCaslonText Regular", 13 * -1)
-    )
+    # canvas.create_text(
+    #     77.0,
+    #     68.0,
+    #     anchor="nw",
+    #     text="Display the Task here",
+    #     fill="#ECECD9",
+    #     font=("LibreCaslonText Regular", 13 * -1)
+    # )
 
 def TextEditor():
     import Text    
@@ -2364,8 +2448,8 @@ def JoinMeetingHost(username,invited_user_ipaddress):
             t5 = threading.Thread(target=audio_sender.start_stream)
             t5.start()
 
-    def start_conferencing():
-        target_ips = text_target_ip.get(1.0, 'end-1c').split(',')  # Split input by comma
+    def start_conferencing(target_ips):
+          # Split input by comma
         start_camera_stream(target_ips)
         start_screen_sharing(target_ips)
         start_audio_stream(target_ips)
@@ -2378,12 +2462,12 @@ def JoinMeetingHost(username,invited_user_ipaddress):
     label_target_ip = tk.Label(window, text="Target IPs (separated by comma):")
     label_target_ip.pack()
 
-    text_target_ip = invited_user_ipaddress
+    
 
     btn_listen = tk.Button(window, text="Start Listening", width=50, command=start_listening)
     btn_listen.pack(anchor=tk.CENTER, expand=True)
 
-    btn_start_conference = tk.Button(window, text="Start Video Conference", width=50, command=start_conferencing)
+    btn_start_conference = tk.Button(window, text="Start Video Conference", width=50, command=start_conferencing(invited_user_ipaddress))
     btn_start_conference.pack(anchor=tk.CENTER, expand=True)
 
     window.mainloop()
@@ -3956,7 +4040,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_7,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: Todo(),
+            command=lambda: Todo(UserID),
             relief="flat"
         )
         button_7.place(
@@ -4168,17 +4252,17 @@ def JoinMeetingClient(UserName):
 
 
     def start_camera_stream():
-        camera_client = CameraClient(text_target_ip.get(1.0,'end-1c'),9999)
+        camera_client = CameraClient(text_target_ip,9999)
         t3 = threading.Thread(target=camera_client.start_stream)
         t3.start()
 
     def start_screen_sharing():
-        screen_client = ScreenShareClient(text_target_ip.get(1.0,'end-1c'),9999)
+        screen_client = ScreenShareClient(text_target_ip,9999)
         t4 = threading.Thread(target=screen_client.start_stream)
         t4.start()
 
     def start_audio_stream():
-        audio_sender = AudioSender(text_target_ip.get(1.0,'end-1c'),8888)
+        audio_sender = AudioSender(text_target_ip,8888)
         t5 = threading.Thread(target=audio_sender.start_stream)
         t5.start()
     #GUI
@@ -4204,7 +4288,7 @@ def JoinMeetingClient(UserName):
 
     btn_audio = tk.Button(window,text="Start Audio Stream", width=50, command=start_audio_stream)
     btn_audio.pack(anchor=tk.CENTER,expand=True)
-
+    window.mainloop()
 
 def receive_notifications():
     try:
