@@ -71,6 +71,13 @@ import pymongo
 from bson.objectid import ObjectId
 import threading
 import logging
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+from tkcalendar import Calendar  # Install tkcalendar via pip: pip install tkcalendar
+from datetime import datetime
+import pymongo
+
 
 
 # Get the directory path of the current Python script
@@ -95,6 +102,7 @@ GroupChatDatabase = client["GroupChatDatabase"]
 
 AdminCollection = AdminDatabase["ManagerCollection"]
 EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
+EmployeeTaskCollection = EmployeeDatabase["EmployeeTaskCollection"]
 GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 
 #print(client.list_database_names)
@@ -1307,15 +1315,19 @@ def Todo(UserName):
             else:
                 messagebox.showwarning("Warning", "Please enter both due date and task details.")
 
-        new_window = tk.Toplevel()
+        new_window = tk.Toplevel(window)
         new_window.title("Add Task")
 
         due_date_label = tk.Label(new_window, text="Due Date:")
         due_date_label.grid(row=0, column=0, padx=10, pady=5)
 
-        due_date_calendar = Calendar(new_window, selectmode="day",
-                                    year=datetime.now().year, month=datetime.now().month,
-                                    day=datetime.now().day)
+        due_date_calendar = Calendar(
+            new_window, 
+            selectmode="day",
+            year=datetime.now().year, 
+            month=datetime.now().month,
+            day=datetime.now().day
+            )
         due_date_calendar.grid(row=0, column=1, padx=10, pady=5)
 
         time_frame = ttk.Frame(new_window)
@@ -2414,7 +2426,7 @@ def display_notification():
     
     window.mainloop()
 
-def JoinMeetingHost(username,invited_user_ipaddress):
+def JoinMeetingHost(username, invited_user_ipaddress):
    
     host_meeting_window = tk.Tk()
     host_meeting_window.title('Host Meeting')
@@ -2423,6 +2435,10 @@ def JoinMeetingHost(username,invited_user_ipaddress):
 
     server = StreamingServer(local_ip_address, 9999)
     receiver = AudioReceiver(local_ip_address, 8888)
+
+    camera_clients = []
+    screen_share_clients = []
+    audio_senders = []
 
     def start_listening():
         t1 = threading.Thread(target=server.start_server)
@@ -2433,42 +2449,87 @@ def JoinMeetingHost(username,invited_user_ipaddress):
     def start_camera_stream(target_ips):
         for ip in target_ips:
             camera_client = CameraClient(ip.strip(), 7777)
+            camera_clients.append(camera_client)
             t3 = threading.Thread(target=camera_client.start_stream)
             t3.start()
 
     def start_screen_sharing(target_ips):
         for ip in target_ips:
             screen_client = ScreenShareClient(ip.strip(), 7777)
+            screen_share_clients.append(screen_client)
             t4 = threading.Thread(target=screen_client.start_stream)
             t4.start()
 
     def start_audio_stream(target_ips):
         for ip in target_ips:
             audio_sender = AudioSender(ip.strip(), 6666)
+            audio_senders.append(audio_sender)
             t5 = threading.Thread(target=audio_sender.start_stream)
             t5.start()
 
-    def start_conferencing(target_ips):
-          # Split input by comma
-        start_camera_stream(target_ips)
-        start_screen_sharing(target_ips)
-        start_audio_stream(target_ips)
+    def stop_camera_stream():
+        for client in camera_clients:
+            client.stop_stream()
+
+    def stop_screen_sharing():
+        for client in screen_share_clients:
+            client.stop_stream()
+
+    def stop_audio_stream():
+        for sender in audio_senders:
+            sender.stop_stream()
+
+    # def start_conferencing(target_ips):
+    #     start_camera_stream(target_ips)
+    #     start_screen_sharing(target_ips)
+    #     start_audio_stream(target_ips)
+
+    def toggle_camera_stream():
+        if btn_camera.config('text')[-1] == 'Start Camera Stream':
+            btn_camera.config(text='Stop Camera Stream')
+            start_camera_stream(invited_user_ipaddress)
+        else:
+            btn_camera.config(text='Start Camera Stream')
+            stop_camera_stream()
+
+    def toggle_screen_sharing():
+        if btn_screen.config('text')[-1] == 'Start Screen Sharing':
+            btn_screen.config(text='Stop Screen Sharing')
+            start_screen_sharing(invited_user_ipaddress)
+        else:
+            btn_screen.config(text='Start Screen Sharing')
+            stop_screen_sharing()
+
+    def toggle_audio_stream():
+        if btn_audio.config('text')[-1] == 'Start Audio Stream':
+            btn_audio.config(text='Stop Audio Stream')
+            start_audio_stream(invited_user_ipaddress)
+        else:
+            btn_audio.config(text='Start Audio Stream')
+            stop_audio_stream()
 
     # GUI
     window = tk.Tk()
     window.title('Video Conference')
-    window.geometry('300x300')
+    window.geometry('800x600')
 
     label_target_ip = tk.Label(window, text="Target IPs (separated by comma):")
     label_target_ip.pack()
 
-    
-
-    btn_listen = tk.Button(window, text="Start Listening", width=50, command=start_listening)
+    btn_listen = tk.Button(window, text="Start Listening", width=20, command=start_listening(invited_user_ipaddress))
     btn_listen.pack(anchor=tk.CENTER, expand=True)
 
-    btn_start_conference = tk.Button(window, text="Start Video Conference", width=50, command=start_conferencing(invited_user_ipaddress))
-    btn_start_conference.pack(anchor=tk.CENTER, expand=True)
+    btn_camera = tk.Button(window, text="Start Camera Stream", width=20, command=toggle_camera_stream(invited_user_ipaddress))
+    btn_camera.pack(side=tk.LEFT, padx=10)
+
+    btn_screen = tk.Button(window, text="Start Screen Sharing", width=20, command=toggle_screen_sharing(invited_user_ipaddress))
+    btn_screen.pack(side=tk.LEFT, padx=10)
+
+    btn_audio = tk.Button(window, text="Start Audio Stream", width=20, command=toggle_audio_stream(invited_user_ipaddress))
+    btn_audio.pack(side=tk.LEFT, padx=10)
+
+    # btn_start_conference = tk.Button(window, text="Start Video Conference", width=20, command=start_conferencing(invited_user_ipaddress))
+    # btn_start_conference.pack(anchor=tk.CENTER, expand=True)
 
     window.mainloop()
 
@@ -2514,7 +2575,6 @@ def JoinVideoConferencing(invited_user_ipaddress,UserName):
             TurnOnCameraButton.config(image=TurnOnCameraOffImage)  # Change button image
             camera_on = True
 
-    
     def toggle_microphone():
         global mic_on
         if mic_on:
@@ -4246,7 +4306,7 @@ def JoinMeetingClient(UserName):
 
     def start_listening():
         t1= threading.Thread(target=server.start_server)
-        t2= threading.Thread(target=receiver.start_server)
+        t2= threading.Thread(target=receiver.start_server,)
         t1.start()
         t2.start()
 
