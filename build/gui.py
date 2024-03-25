@@ -4148,7 +4148,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_10,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_22 clicked"),
+            command=lambda: print("button_22 clicked"),#appointment
             relief="flat"
         )
         button_10.place(
