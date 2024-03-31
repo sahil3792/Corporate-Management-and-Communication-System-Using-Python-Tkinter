@@ -80,6 +80,8 @@ server_port= 5555
 
 EmployeeCollection.update_many({},{"$set":{"NotificationServerIP": server_ip, "NotificationServerPort": server_port}})
 
+
+
 def handle_client(client_socket, clients):
     while True:
         try:
