@@ -1307,10 +1307,22 @@ def VideoConferencing():
     btn_audio.pack(anchor=tk.CENTER,expand=True)
     window.after(1000, start_camera_stream)
 
-def Todo(UserName,CompanyName):
-    global DeleteTaskButton,AddTaskButton, TodoListBGImage
+def Todo(UserName, CompanyName):
+    global DeleteTaskButton, AddTaskButton, TodoListBGImage
     TodoListMainFrame = Frame(window, height=450, width=510)
-    TodoListMainFrame.place(x=36,y=0)
+    TodoListMainFrame.place(x=36, y=0)
+
+    canvas = Canvas(
+        TodoListMainFrame,
+        bg="#3A868F",
+        height=450,
+        width=510,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+
+    canvas.place(x=0, y=0)
     
     def add_task_window():
         add_window = tk.Toplevel(window)
@@ -1338,7 +1350,6 @@ def Todo(UserName,CompanyName):
 
                 add_window.destroy()
                 display_tasks()
-
             else:
                 print("Please fill in all fields.")
 
@@ -1347,7 +1358,6 @@ def Todo(UserName,CompanyName):
             cal.pack(pady=10)
         except AttributeError as e:
             print("Error: Calendar object has no attribute '_properties'.", e)
-
 
         hour_label = Label(add_window, text="Due Time (HH:MM):")
         hour_label.pack()
@@ -1372,64 +1382,64 @@ def Todo(UserName,CompanyName):
         submit_button = Button(add_window, text="Submit", command=submit_task)
         submit_button.pack()
 
-    def delete_task(task_id, task_label, date_label, tasks_dict):
+    def delete_task(task_id, text_id, rect_id):
         TodoListCollection.delete_one({"_id": task_id})
-        task_label.destroy()
-
-        tasks_dict[date_label["text"]].remove(task_id)
-        if not tasks_dict[date_label["text"]]:
-            date_label.destroy()
+        canvas.delete(text_id)  # Delete the task text
+        canvas.delete(rect_id)  # Delete the rectangle
 
     def display_tasks():
-        global tasks_frame
+        # Clear the existing tasks
+        canvas.delete("all")
 
-        if 'tasks_frame' in globals():
-            tasks_frame.destroy()
-
-        tasks_frame = Frame(TodoListMainFrame)
-        tasks_frame.pack(padx=20, pady=10, fill=tk.BOTH, expand=True)
-
+        # Retrieve all tasks from the database
         tasks = TodoListCollection.find().sort("date", 1)
-        tasks_dict = {}
+
+        # Group tasks by date
+        tasks_by_date = {}
         for task in tasks:
             task_date = task["date"].strftime("%d %B %Y")
-            if task_date not in tasks_dict:
-                tasks_dict[task_date] = []
+            if task_date not in tasks_by_date:
+                tasks_by_date[task_date] = []
+            tasks_by_date[task_date].append(task)
 
-            tasks_dict[task_date].append(task["_id"])
+        y_position = 40  # Initial y position for the task details
 
-        for date_label_text, task_ids in tasks_dict.items():
-            date_label = Label(tasks_frame, text=date_label_text)
-            date_label.pack(anchor="w", pady=5)
+        # Display tasks grouped by date
+        for date, tasks_list in tasks_by_date.items():
+            # Display the date using create_text
+            canvas.create_text(20, y_position, text=date, fill="#173054", font=("Libre Caslon Text", 13), anchor="w")
+            y_position += 20  # Increment y position for the task details
 
-            for task_id in task_ids:
-                task = TodoListCollection.find_one({"_id": task_id})
+            # Display task details within separate rectangles
+            for task in tasks_list:
+                # Create a rectangle for each task
+                rect_width = 445  # Adjust this width based on your canvas width
+                rect_height = 30  # Adjust this height as needed
+                canvas.create_rectangle(20, y_position, 20 + rect_width, y_position + rect_height, fill="#173054", outline="")
+
+                # Display task details within the rectangle
                 task_details = f"{task['task']}  {task['date'].strftime('%H:%M')}"
-                task_label = Label(tasks_frame, text=task_details, cursor="hand2", fg="blue")
-                task_label.pack(side=tk.LEFT, anchor="w")
-                task_label.bind("<Button-1>", lambda event, id=task_id, label=task_label, date_label=date_label, tasks_dict=tasks_dict: delete_task(id, label, date_label, tasks_dict))
+                canvas.create_text(30, y_position + 15, text=task_details, fill="#ECECD9", font=("Libre Caslon Text", 12), anchor="w")
 
-    canvas = Canvas(
-    TodoListMainFrame,
-    bg = "#3A868F",
-    height = 450,
-    width = 510,
-    bd = 0,
-    highlightthickness = 0,
-    relief = "ridge"
-    )
+                y_position += rect_height + 5  # Add space between rectangles
 
-    canvas.place(x = 0, y = 0)
-    TodoListBGImage = PhotoImage(
-    file=relative_to_assets("image_21.png"))
+            y_position += 10  # Add padding after the last rectangle
+
+        canvas.pack()
+
+
+
+
+    display_tasks()
+
+    TodoListBGImage = PhotoImage(file=relative_to_assets("image_21.png"))
     image_1 = canvas.create_image(
         255.0,
         225.0,
         image=TodoListBGImage
     )
 
-    AddTaskButton = PhotoImage(
-        file=relative_to_assets("button_45.png"))
+    AddTaskButton = PhotoImage(file=relative_to_assets("button_45.png"))
     button_1 = Button(
         TodoListMainFrame,
         image=AddTaskButton,
@@ -1444,6 +1454,11 @@ def Todo(UserName,CompanyName):
         width=91.0,
         height=31.0
     )
+
+    # Display tasks immediately after the Todo function is executed
+    display_tasks()
+
+
 
     # DeleteTaskButton = PhotoImage(
     #     file=relative_to_assets("button_46.png"))
