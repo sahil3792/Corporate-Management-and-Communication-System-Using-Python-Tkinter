@@ -148,6 +148,15 @@ def Managerbrowse_photo():
     print(filename)
     return filename
 
+
+def LeaveManagement():
+    # step1 on the main from of the user if they applied for any leave and whether it is approved or not
+    # step2 display a button on the top where they want to apply for a new leave 
+    # step3 if button click on then display a new window where user enters all the details related to the leave as soon as he clicks on the submmit button
+    # step4 then notify the admin about the leave admin can choose to approve or disapprove or reply later or may be just notify the user and display a list of leave to the admin in leave management Portal
+    # step5 if the admin approves then on the user side change the pending status to approved or decline based on the admin reply
+    pass
+
 def SubmitForm(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry,selected_listbox):
     selected_items = []
     for index in range(selected_listbox.size()):
