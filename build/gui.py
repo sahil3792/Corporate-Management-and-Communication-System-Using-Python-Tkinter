@@ -150,6 +150,35 @@ def Managerbrowse_photo():
 
 
 def LeaveManagement():
+    global LeaveManagementApplybutton_image_1
+    LeaveManagementFrame = Frame(window,height=450, width=510)
+    LeaveManagementFrame.place(x=36, y=0)
+    canvas = Canvas(
+    LeaveManagementFrame,
+    bg = "#3A868F",
+    height = 450,
+    width = 510,
+    bd = 0,
+    highlightthickness = 0,
+    relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    LeaveManagementApplybutton_image_1 = PhotoImage(
+        file=relative_to_assets("button_47.png"))
+    button_1 = Button(LeaveManagementFrame,
+        image=LeaveManagementApplybutton_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_1 clicked"),
+        relief="flat"
+    )
+    button_1.place(
+        x=399.0,
+        y=18.0,
+        width=94.0,
+        height=35.0
+    )
     # step1 on the main from of the user if they applied for any leave and whether it is approved or not
     # step2 display a button on the top where they want to apply for a new leave 
     # step3 if button click on then display a new window where user enters all the details related to the leave as soon as he clicks on the submmit button
@@ -4173,7 +4202,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_8,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_20 clicked"),
+            command=lambda: LeaveManagement(),
             relief="flat"
         )
         button_8.place(
@@ -4777,8 +4806,6 @@ def SignInToSkive():
         height=21.0
     )
     
-
-
 def Main_Window():
     
     canvas = Canvas(
