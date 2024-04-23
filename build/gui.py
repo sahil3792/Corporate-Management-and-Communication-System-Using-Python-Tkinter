@@ -67,6 +67,7 @@ from tkcalendar import Calendar  # Install tkcalendar via pip: pip install tkcal
 from bson.objectid import ObjectId
 import logging
 from tkcalendar import Calendar, DateEntry
+import datetime
 
 
 
@@ -153,10 +154,10 @@ def Managerbrowse_photo():
 
 def upload_to_database(details):
     print(details)
-    #LeaveManagementCollection.insert_one(details)
+    LeaveManagementCollection.insert_one(details)
 
 def open_leave_application_window(CompanyName,UserID):
-    global button_image_1
+    global SubmitFormLeaveForm_image
 
     new_window = Toplevel(window)  # Create a new window
     new_window.title("Leave Application Form")  # Set the title for the new window
@@ -166,15 +167,16 @@ def open_leave_application_window(CompanyName,UserID):
         details = {
             "CompanyName": CompanyName,
             "UserName": UserID,
-            "start_date": start_date_entry.get_date(),
+            "start_date": start_date_entry.get_date().strftime('%Y-%m-%d'),
             "reason_for_leave": entry_1.get(),
             "contact_information": entry_2.get(),
-            "end_date": end_date_entry.get_date(),
-            "Approval": "Pending"
+            "end_date": end_date_entry.get_date().strftime('%Y-%m-%d'),
+            "Status": "Pending"
             # Add other details as needed
         }
         
         upload_to_database(details)
+        new_window.destroy()
 
         
     canvas = Canvas(
@@ -319,11 +321,11 @@ def open_leave_application_window(CompanyName,UserID):
         font=("LibreCaslonText Regular", 16 * -1)
     )
 
-    button_image_1 = PhotoImage(
+    SubmitFormLeaveForm_image = PhotoImage(
         file=relative_to_assets("button_48.png"))
     button_1 = Button(
         new_window,
-        image=button_image_1,
+        image=SubmitFormLeaveForm_image,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: on_button_click(),
@@ -335,6 +337,18 @@ def open_leave_application_window(CompanyName,UserID):
         width=119.0,
         height=35.0
     )
+
+def display_leave_details(canvas, leave_details):
+    y_offset = 100  # Initial vertical offset for displaying details
+
+    for leave in leave_details:
+        # Displaying the details in the rectangle canvas
+        canvas.create_text(50, y_offset, anchor="nw", text=f"Start Date: {leave['start_date']}")
+        canvas.create_text(50, y_offset + 20, anchor="nw", text=f"End Date: {leave['end_date']}")
+        canvas.create_text(400, y_offset, anchor="ne", text=f"Status: {leave['Status']}")
+
+        # Incrementing the vertical offset for the next set of details
+        y_offset += 50
 
 def LeaveManagement(CompanyName,UserID):
     global LeaveManagementApplybutton_image_1
@@ -351,6 +365,19 @@ def LeaveManagement(CompanyName,UserID):
     )
 
     canvas.place(x = 0, y = 0)
+
+    def update_leave_details():
+        # Retrieve leave details from the database
+        leave_details = LeaveManagementCollection.find({"UserName": UserID})  # Implement this function to retrieve details from the database
+        # Clear the canvas
+        canvas.delete("all")
+        # Display leave details in the canvas
+        display_leave_details(canvas, leave_details)
+        # Schedule the next update after a certain interval (e.g., every 60 seconds)
+        threading.Timer(30, update_leave_details).start()
+
+    # Initial update of leave details
+    update_leave_details()
     LeaveManagementApplybutton_image_1 = PhotoImage(
         file=relative_to_assets("button_47.png"))
     button_1 = Button(LeaveManagementFrame,
