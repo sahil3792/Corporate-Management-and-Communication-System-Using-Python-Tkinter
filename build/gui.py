@@ -148,6 +148,143 @@ def Managerbrowse_photo():
     print(filename)
     return filename
 
+def open_leave_application_window():
+
+    new_window = Toplevel(window)  # Create a new window
+    new_window.title("Leave Application Form")  # Set the title for the new window
+    new_window.geometry("510x450")
+
+        
+    canvas = Canvas(
+        new_window,
+        bg = "#173054",
+        height = 450,
+        width = 510,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    canvas.create_rectangle(
+        47.0,
+        63.0,
+        230.0,
+        89.0,
+        fill="#173054",
+        outline="")
+
+    entry_image_1 = PhotoImage(
+        file=relative_to_assets("entry_56.png"))
+    entry_bg_1 = canvas.create_image(
+        138.5,
+        280.0,
+        image=entry_image_1
+    )
+    entry_1 = Entry(
+        new_window,
+        bd=0,
+        bg="#ECECD9",
+        fg="#000716",
+        highlightthickness=0
+    )
+    entry_1.place(
+        x=52.0,
+        y=267.0,
+        width=173.0,
+        height=24.0
+    )
+
+    entry_image_2 = PhotoImage(
+        file=relative_to_assets("entry_57.png"))
+    entry_bg_2 = canvas.create_image(
+        372.5,
+        280.0,
+        image=entry_image_2
+    )
+    entry_2 = Entry(
+        new_window,
+        bd=0,
+        bg="#ECECD9",
+        fg="#000716",
+        highlightthickness=0
+    )
+    entry_2.place(
+        x=286.0,
+        y=267.0,
+        width=173.0,
+        height=24.0
+    )
+
+    canvas.create_rectangle(
+        294.0,
+        63.0,
+        477.0,
+        89.0,
+        fill="#173054",
+        outline="")
+
+    canvas.create_text(
+        49.0,
+        41.0,
+        anchor="nw",
+        text="Start date:-",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 15 * -1)
+    )
+
+    canvas.create_text(
+        49.0,
+        245.0,
+        anchor="nw",
+        text="Reason for leave",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 15 * -1)
+    )
+
+    canvas.create_text(
+        286.0,
+        245.0,
+        anchor="nw",
+        text="Contact information",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 15 * -1)
+    )
+
+    canvas.create_text(
+        297.0,
+        45.0,
+        anchor="nw",
+        text="End date:",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 15 * -1)
+    )
+
+    canvas.create_text(
+        21.0,
+        17.0,
+        anchor="nw",
+        text="Leave application form",
+        fill="#ECECD9",
+        font=("LibreCaslonText Regular", 16 * -1)
+    )
+
+    button_image_1 = PhotoImage(
+        file=relative_to_assets("button_48.png"))
+    button_1 = Button(
+        new_window,
+        image=button_image_1,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: print("button_1 clicked"),
+        relief="flat"
+    )
+    button_1.place(
+        x=195.0,
+        y=345.0,
+        width=119.0,
+        height=35.0
+    )
 
 def LeaveManagement():
     global LeaveManagementApplybutton_image_1
@@ -170,7 +307,7 @@ def LeaveManagement():
         image=LeaveManagementApplybutton_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: open_leave_application_window(),
         relief="flat"
     )
     button_1.place(
@@ -184,7 +321,7 @@ def LeaveManagement():
     # step3 if button click on then display a new window where user enters all the details related to the leave as soon as he clicks on the submmit button
     # step4 then notify the admin about the leave admin can choose to approve or disapprove or reply later or may be just notify the user and display a list of leave to the admin in leave management Portal
     # step5 if the admin approves then on the user side change the pending status to approved or decline based on the admin reply
-    pass
+    # leave dates with exact duration reason for leave contact infoction during leave document if required signature / authentication pass
 
 def SubmitForm(CompanyName,username,Password,EmployeeFirstNameentry,EmployeeMiddleNameentry,EmployeeLastNameentry,EmployeeAgeentry,EmployeeGenderentry,EmployeeMobileNumberentry,EmployeeBirthDateentry,EmployeeDesignationentry,EmployeeEducationentry,EmployeeMailIDentry,EmployeeWorkExperienceentry,EmployeeSalaryentry,selected_listbox):
     selected_items = []
