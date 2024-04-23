@@ -66,6 +66,7 @@ from datetime import datetime
 from tkcalendar import Calendar  # Install tkcalendar via pip: pip install tkcalendar
 from bson.objectid import ObjectId
 import logging
+from tkcalendar import Calendar, DateEntry
 
 
 
@@ -98,12 +99,14 @@ AdminDatabase = client["AdminDatabase"]
 EmployeeDatabase = client["EmployeeDatabase"]
 GroupChatDatabase = client["GroupChatDatabase"]
 TodoListDatabase = client["TodoListDatabase"]
+LeaveManagementDatabase = client["LeaveManagementDatabase"]
 
 AdminCollection = AdminDatabase["ManagerCollection"]
 EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
 EmployeeTaskCollection = EmployeeDatabase["EmployeeTaskCollection"]
 GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 TodoListCollection = TodoListDatabase["TodoListCollection"]
+LeaveManagementCollection = LeaveManagementDatabase["LeaveManagementCollection"]
 
 #print(client.list_database_names)
 
@@ -148,11 +151,30 @@ def Managerbrowse_photo():
     print(filename)
     return filename
 
-def open_leave_application_window():
+def upload_to_database(details):
+    print(details)
+    #LeaveManagementCollection.insert_one(details)
+
+def open_leave_application_window(CompanyName,UserID):
+    global button_image_1
 
     new_window = Toplevel(window)  # Create a new window
     new_window.title("Leave Application Form")  # Set the title for the new window
     new_window.geometry("510x450")
+    def on_button_click():
+        # Get the details from the widgets
+        details = {
+            "CompanyName": CompanyName,
+            "UserName": UserID,
+            "start_date": start_date_entry.get_date(),
+            "reason_for_leave": entry_1.get(),
+            "contact_information": entry_2.get(),
+            "end_date": end_date_entry.get_date(),
+            "Approval": "Pending"
+            # Add other details as needed
+        }
+        
+        upload_to_database(details)
 
         
     canvas = Canvas(
@@ -233,6 +255,20 @@ def open_leave_application_window():
         font=("LibreCaslonText Regular", 15 * -1)
     )
 
+    start_date_entry = DateEntry(
+        new_window,
+        bd=0,
+        bg="#ECECD9",
+        fg="#000716",
+        highlightthickness=0
+    )
+    start_date_entry.place(
+        x=52.0,
+        y=95.0,
+        width=173.0,
+        height=24.0
+    )
+
     canvas.create_text(
         49.0,
         245.0,
@@ -260,6 +296,20 @@ def open_leave_application_window():
         font=("LibreCaslonText Regular", 15 * -1)
     )
 
+    end_date_entry = DateEntry(
+        new_window,
+        bd=0,
+        bg="#ECECD9",
+        fg="#000716",
+        highlightthickness=0
+    )
+    end_date_entry.place(
+        x=286.0,
+        y=95.0,
+        width=173.0,
+        height=24.0
+    )
+
     canvas.create_text(
         21.0,
         17.0,
@@ -276,7 +326,7 @@ def open_leave_application_window():
         image=button_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_1 clicked"),
+        command=lambda: on_button_click(),
         relief="flat"
     )
     button_1.place(
@@ -286,7 +336,7 @@ def open_leave_application_window():
         height=35.0
     )
 
-def LeaveManagement():
+def LeaveManagement(CompanyName,UserID):
     global LeaveManagementApplybutton_image_1
     LeaveManagementFrame = Frame(window,height=450, width=510)
     LeaveManagementFrame.place(x=36, y=0)
@@ -307,7 +357,7 @@ def LeaveManagement():
         image=LeaveManagementApplybutton_image_1,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: open_leave_application_window(),
+        command=lambda: open_leave_application_window(CompanyName,UserID),
         relief="flat"
     )
     button_1.place(
@@ -4339,7 +4389,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_8,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: LeaveManagement(),
+            command=lambda: LeaveManagement(CompanyName,UserID),
             relief="flat"
         )
         button_8.place(
