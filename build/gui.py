@@ -2017,6 +2017,101 @@ def TaskAssignmentTool(UserID,Company_Name):
         fill="#173054",
         outline="")
 
+def LeaveApplicationDisplay():
+    LeaveApplicationFrame = Frame(window, height="450", width="510")
+    LeaveApplicationFrame.place(x=36,y=0)
+        
+    canvas = Canvas(
+        LeaveApplicationFrame,
+        bg = "#173054",
+        height = 450,
+        width = 510,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    canvas.create_text(
+        102.0,
+        7.0,
+        anchor="nw",
+        text="Leave Applications",
+        fill="#FFFFFF",
+        font=("Libre Caslon Text", 18 * -1)
+    )
+    for widget in canvas.winfo_children():
+        widget.destroy()
+
+    # Fetch entries from the database
+    entries = LeaveManagementCollection.find()
+
+    # Create and place widgets for each entry
+    y_offset = 150  # Initial y-coordinate for the first entry
+    for idx, entry in enumerate(entries):
+        # Create a rectangle
+        canvas.create_rectangle(
+            21.0,
+            y_offset - 57.0,
+            489.0,
+            y_offset + 1.0,
+            fill="#3A868F",
+            outline=""
+        )
+
+        # Create and place username text
+        canvas.create_text(
+            30.0,
+            y_offset - 52.0,
+            anchor="nw",
+            text=f"{entry['UserName']}",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 17 * -1)
+        )
+
+        # Create and place start date text
+        canvas.create_text(
+            30.0,
+            y_offset - 25.0,
+            anchor="nw",
+            text=f"{entry['start_date']}",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 15 * -1)
+        )
+
+        # Create and place end date text
+        canvas.create_text(
+            140.0,
+            y_offset - 25.0,
+            anchor="nw",
+            text=f"{entry['end_date']}",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 15 * -1)
+        )
+
+        # Create dropdown menu
+        status_var = StringVar(LeaveApplicationFrame)
+        status_var.set(entry['Status'])  # Set default value from database
+        status_menu = OptionMenu(LeaveApplicationFrame, status_var, "Approve", "Refuse")
+        status_menu.place(x=260.0, y=y_offset - 45.0)
+
+        # Create submit button
+        def on_submit(entry_id):
+            new_status = status_var.get()
+            LeaveManagementCollection.update_one({"_id": entry_id}, {"$set": {"Status": new_status}})
+            #update_widgets()  # Update widgets after database update
+
+        submit_button = Button(
+            LeaveApplicationFrame,
+            text="Submit",
+            command=lambda entry_id=entry['_id']: on_submit(entry_id),
+            relief="flat"
+        )
+        submit_button.place(x=397.0, y=y_offset - 52.0, width=81.0, height=36.0)
+
+        # Update y_offset for next entry
+        y_offset += 100
+
 def AdminProfile(UserID,Company_Name):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
@@ -2234,7 +2329,7 @@ def AdminProfile(UserID,Company_Name):
             image=button_image_8,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_20 clicked"),
+            command=lambda: LeaveApplicationDisplay(),
             relief="flat"
         )
         button_8.place(
