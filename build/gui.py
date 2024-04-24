@@ -2017,7 +2017,7 @@ def TaskAssignmentTool(UserID,Company_Name):
         fill="#173054",
         outline="")
 
-def LeaveApplicationDisplay():
+def LeaveApplicationDisplay(CompanyName,UserID):
     LeaveApplicationFrame = Frame(window, height="450", width="510")
     LeaveApplicationFrame.place(x=36,y=0)
         
@@ -2040,11 +2040,13 @@ def LeaveApplicationDisplay():
         fill="#FFFFFF",
         font=("Libre Caslon Text", 18 * -1)
     )
+    
+    # Clear existing widgets
     for widget in canvas.winfo_children():
         widget.destroy()
 
     # Fetch entries from the database
-    entries = LeaveManagementCollection.find()
+    entries = LeaveManagementCollection.find({"CompanyName": CompanyName})
 
     # Create and place widgets for each entry
     y_offset = 150  # Initial y-coordinate for the first entry
@@ -2097,6 +2099,7 @@ def LeaveApplicationDisplay():
 
         # Create submit button
         def on_submit(entry_id):
+            print(entry_id)
             new_status = status_var.get()
             LeaveManagementCollection.update_one({"_id": entry_id}, {"$set": {"Status": new_status}})
             #update_widgets()  # Update widgets after database update
@@ -2329,7 +2332,7 @@ def AdminProfile(UserID,Company_Name):
             image=button_image_8,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: LeaveApplicationDisplay(),
+            command=lambda: LeaveApplicationDisplay(Company_Name,UserID),
             relief="flat"
         )
         button_8.place(
