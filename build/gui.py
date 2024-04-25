@@ -102,12 +102,14 @@ GroupChatDatabase = client["GroupChatDatabase"]
 TodoListDatabase = client["TodoListDatabase"]
 LeaveManagementDatabase = client["LeaveManagementDatabase"]
 
+
 AdminCollection = AdminDatabase["ManagerCollection"]
 EmployeeCollection = EmployeeDatabase["EmployeeCollection"]
 EmployeeTaskCollection = EmployeeDatabase["EmployeeTaskCollection"]
 GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 TodoListCollection = TodoListDatabase["TodoListCollection"]
 LeaveManagementCollection = LeaveManagementDatabase["LeaveManagementCollection"]
+AppointmentSchedullingCollection = LeaveManagementDatabase['Appointment Scheduling Collection']
 
 #print(client.list_database_names)
 
@@ -4293,6 +4295,213 @@ def GroupChatApplication(CompanyName,UserID):
     right_frame.place(x=190, y=0)
     DisplayGroups()
 
+def AppointmentSchedulingAndDisplay(CompanyName,UserID):
+    global BookAnAppointmentButtonImage
+    AppointmentSchedulingFrame =  Frame(window,height="450", width="510")
+    AppointmentSchedulingFrame.place(x=36,y=0)
+    def BookAnAppointment(CompanyName,UserID):
+        appointment_window = tk.Toplevel(window)
+        appointment_window.title("Book an Appointment")
+        appointment_window.geometry("320x450")
+
+        def submit_appointment():
+            reason = entry_1.get()
+            date = entry_3.get()
+            time = entry_2.get()
+
+            # Validate the input (you can add more validation if needed)
+            if not reason or not date or not time:
+                messagebox.showerror("Error", "Please fill in all fields.")
+                return
+
+            # Construct the appointment document
+            appointment = {
+                "CompanyName":CompanyName,
+                "UserName":UserID,
+                "reason": reason,
+                "date": date,
+                "time": time,
+                "Status":"Pending"
+            }
+
+            # Insert the appointment into the MongoDB collection
+            try:
+                AppointmentSchedullingCollection.insert_one(appointment)
+                messagebox.showinfo("Success", "Appointment scheduled successfully.")
+            except pymongo.errors.PyMongoError as e:
+                messagebox.showerror("Error", f"An error occurred: {e}")
+
+            # Clear the entry fields after submission
+            entry_1.delete(0, tk.END)
+            entry_2.delete(0, tk.END)
+            entry_3.delete(0, tk.END)
+        
+                
+        canvas = Canvas(
+            appointment_window,
+            bg = "#173054",
+            height = 450,
+            width = 320,
+            bd = 0,
+            highlightthickness = 0,
+            relief = "ridge"
+        )
+
+        canvas.place(x = 0, y = 0)
+        button_image_1 = PhotoImage(
+            file=relative_to_assets("button_50.png"))
+        button_1 = Button(
+            appointment_window,
+            image=button_image_1,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: submit_appointment(),
+            relief="flat"
+        )
+        button_1.place(
+            x=95.0,
+            y=322.0,
+            width=130.0,
+            height=45.0
+        )
+
+        canvas.create_text(
+            46.0,
+            0.0,
+            anchor="nw",
+            text="Book an Appointment",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 20 * -1)
+        )
+
+        canvas.create_text(
+            33.0,
+            95.0,
+            anchor="nw",
+            text="Reason:",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 17 * -1)
+        )
+
+        entry_image_1 = PhotoImage(
+            file=relative_to_assets("entry_58.png"))
+        entry_bg_1 = canvas.create_image(
+            160.0,
+            129.5,
+            image=entry_image_1
+        )
+        entry_1 = Entry(
+            appointment_window,
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0
+        )
+        entry_1.place(
+            x=45.0,
+            y=116.0,
+            width=230.0,
+            height=25.0
+        )
+
+        canvas.create_text(
+            33.0,
+            219.0,
+            anchor="nw",
+            text="Time:(HH:MM)",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 17 * -1)
+        )
+
+        entry_image_2 = PhotoImage(
+            file=relative_to_assets("entry_59.png"))
+        entry_bg_2 = canvas.create_image(
+            160.0,
+            191.5,
+            image=entry_image_2
+        )
+        entry_2 = Entry(
+            appointment_window,
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0
+        )
+        entry_2.place(
+            x=45.0,
+            y=178.0,
+            width=230.0,
+            height=25.0
+        )
+
+        canvas.create_text(
+            33.0,
+            157.0,
+            anchor="nw",
+            text="Date:(YYYY-MM-DD)",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 17 * -1)
+        )
+
+        entry_image_3 = PhotoImage(
+            file=relative_to_assets("entry_60.png"))
+        entry_bg_3 = canvas.create_image(
+            160.0,
+            253.5,
+            image=entry_image_3
+        )
+        entry_3 = Entry(
+            appointment_window,
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0
+        )
+        entry_3.place(
+            x=45.0,
+            y=240.0,
+            width=230.0,
+            height=25.0
+        )
+
+    canvas = Canvas(
+        AppointmentSchedulingFrame,
+        bg = "#173054",
+        height = 450,
+        width = 510,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    canvas.create_text(
+        61.0 + 36,
+        7.0,
+        anchor="nw",
+        text="Appointment Scheduling",
+        fill="#FFFFFF",
+        font=("LibreCaslonText Regular", 18 * -1)
+    )
+
+    BookAnAppointmentButtonImage = PhotoImage(
+        file=relative_to_assets("button_49.png"))
+    button_1 = Button(
+        AppointmentSchedulingFrame,
+        image=BookAnAppointmentButtonImage,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: BookAnAppointment(CompanyName,UserID),
+        relief="flat"
+    )
+    button_1.place(
+        x=383.0,
+        y=13.0,
+        width=106.0,
+        height=36.0
+    )
+
+
 def UserProfile(CompanyName,UserID):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
@@ -4543,7 +4752,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_10,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_22 clicked"),#appointment
+            command=lambda: AppointmentSchedulingAndDisplay(CompanyName,UserID),#appointment
             relief="flat"
         )
         button_10.place(
