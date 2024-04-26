@@ -101,6 +101,7 @@ EmployeeDatabase = client["EmployeeDatabase"]
 GroupChatDatabase = client["GroupChatDatabase"]
 TodoListDatabase = client["TodoListDatabase"]
 LeaveManagementDatabase = client["LeaveManagementDatabase"]
+AppointmentSchedulingDatabase = client['AppointmentSchedulingDatabase']
 
 
 AdminCollection = AdminDatabase["ManagerCollection"]
@@ -109,7 +110,7 @@ EmployeeTaskCollection = EmployeeDatabase["EmployeeTaskCollection"]
 GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 TodoListCollection = TodoListDatabase["TodoListCollection"]
 LeaveManagementCollection = LeaveManagementDatabase["LeaveManagementCollection"]
-AppointmentSchedullingCollection = LeaveManagementDatabase['Appointment Scheduling Collection']
+AppointmentSchedullingCollection = AppointmentSchedulingDatabase['AppointmentSchedulingCollection']
 
 #print(client.list_database_names)
 
@@ -4303,6 +4304,7 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
     AppointmentSchedulingFrame =  Frame(window,height="450", width="510")
     AppointmentSchedulingFrame.place(x=36,y=0)
     def BookAnAppointment(CompanyName,UserID):
+        global entry_bg_1,entry_bg_2,entry_bg_3,BookAnAppointmentSubmitButtonImage
         appointment_window = tk.Toplevel(window)
         appointment_window.title("Book an Appointment")
         appointment_window.geometry("320x450")
@@ -4331,6 +4333,7 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
             try:
                 AppointmentSchedullingCollection.insert_one(appointment)
                 messagebox.showinfo("Success", "Appointment scheduled successfully.")
+                
             except pymongo.errors.PyMongoError as e:
                 messagebox.showerror("Error", f"An error occurred: {e}")
 
@@ -4338,6 +4341,8 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
             entry_1.delete(0, tk.END)
             entry_2.delete(0, tk.END)
             entry_3.delete(0, tk.END)
+            appointment_window.destroy()
+            
         
                 
         canvas = Canvas(
@@ -4351,11 +4356,11 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
         )
 
         canvas.place(x = 0, y = 0)
-        button_image_1 = PhotoImage(
+        BookAnAppointmentSubmitButtonImage = PhotoImage(
             file=relative_to_assets("button_50.png"))
         button_1 = Button(
             appointment_window,
-            image=button_image_1,
+            image=BookAnAppointmentSubmitButtonImage,
             borderwidth=0,
             highlightthickness=0,
             command=lambda: submit_appointment(),
