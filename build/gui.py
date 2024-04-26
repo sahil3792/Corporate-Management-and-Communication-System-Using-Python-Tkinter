@@ -68,6 +68,7 @@ from bson.objectid import ObjectId
 import logging
 from tkcalendar import Calendar, DateEntry
 import datetime
+import time
 
 
 
@@ -2118,6 +2119,103 @@ def LeaveApplicationDisplay(CompanyName,UserID):
         # Update y_offset for next entry
         y_offset += 100
 
+def AppointmentDisplay(Company_Name,UserID):
+    
+    AppointmentDisplayFrame = Frame(window, height="450", width="510")
+    AppointmentDisplayFrame.place(x=36, y=0)
+    print("frame placed")
+
+    canvas = Canvas(
+        AppointmentDisplayFrame,
+        bg="#173054",
+        height=450,
+        width=510,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+    canvas.place(x=0,y=0)
+    print("Canvas placed")
+    def update_status(appointment_id, new_status):
+        AppointmentSchedullingCollection.update_one({"_id": appointment_id}, {"$set": {"Status": new_status}})
+
+    def display_appointments(CompanyName, UserID):
+        print("Display appointment function")
+
+        canvas.delete("all")
+        
+        appointments = AppointmentSchedullingCollection.find({"CompanyName": CompanyName})
+        y_offset = 20
+        for appointment in appointments:
+            reason = appointment["reason"]
+            date = appointment["date"]
+            time = appointment["time"]
+            status = appointment["Status"]
+
+            canvas.create_text(
+                20,
+                y_offset,
+                anchor="nw",
+                text=f"Reason: {reason}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 12),
+            )
+
+            canvas.create_text(
+                20,
+                y_offset + 20,
+                anchor="nw",
+                text=f"Date: {date}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 12),
+            )
+
+            canvas.create_text(
+                20,
+                y_offset + 40,
+                anchor="nw",
+                text=f"Time: {time}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 12),
+            )
+
+            canvas.create_text(
+                20,
+                y_offset + 60,
+                anchor="nw",
+                text=f"Status: {status}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 12),
+            )
+
+            approve_button = Button(
+                AppointmentDisplayFrame,
+                text="Approve",
+                command=lambda appointment_id=appointment["_id"]: update_status(appointment_id, "Approved"),
+                bg="#4CAF50",
+                fg="white",
+                font=("LibreCaslonText Regular", 10),
+                relief="flat"
+            )
+            approve_button.place(x=400, y=y_offset + 20)
+
+            refuse_button = Button(
+                AppointmentDisplayFrame,
+                text="Refuse",
+                command=lambda appointment_id=appointment["_id"]: update_status(appointment_id, "Refused"),
+                bg="#F44336",
+                fg="white",
+                font=("LibreCaslonText Regular", 10),
+                relief="flat"
+            )
+            refuse_button.place(x=450, y=y_offset + 20)
+
+            y_offset += 100  # Adjust as needed
+
+        # Schedule the next update after 15 seconds
+        threading.Timer(15, display_appointments, args=(CompanyName, UserID)).start()
+    display_appointments(Company_Name,UserID)
+
 def AdminProfile(UserID,Company_Name):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
@@ -2367,7 +2465,7 @@ def AdminProfile(UserID,Company_Name):
             image=button_image_10,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_22 clicked"),
+            command=lambda: AppointmentDisplay(Company_Name,UserID),
             relief="flat"
         )
         button_10.place(
@@ -4508,8 +4606,79 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
         width=106.0,
         height=36.0
     )
+    
 
+    def display_appointments():
 
+        appointments = AppointmentSchedullingCollection.find({"CompanyName": CompanyName, "UserName": UserID})
+        y_offset = 120 
+        # Clear previous appointments
+        canvas.delete("appointments")
+        for appointment in appointments:
+            reason = appointment["reason"]
+            date = appointment["date"]
+            time = appointment["time"]
+            status = appointment["Status"]
+
+            # Create a rectangle for each appointment
+            canvas.create_rectangle(
+                21.0,
+                y_offset,
+                489.0,
+                y_offset + 58.0,  # Adjust height as needed
+                fill="#3A868F",
+                outline=""
+            )
+
+            # Display appointment details
+            canvas.create_text(
+                288.0,
+                y_offset + 23.0,
+                anchor="nw",
+                text=f"Status: {status}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 15 * -1)
+            )
+
+            canvas.create_text(
+                30.0,
+                y_offset + 6.0,
+                anchor="nw",
+                text=f"Reason: {reason}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 17 * -1)
+            )
+
+            canvas.create_text(
+                30.0,
+                y_offset + 33.0,
+                anchor="nw",
+                text=f"Date: {date}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 15 * -1)
+            )
+
+            canvas.create_text(
+                140.0,
+                y_offset + 33.0,
+                anchor="nw",
+                text=f"Time: {time}",
+                fill="#FFFFFF",
+                font=("LibreCaslonText Regular", 15 * -1)
+            )
+
+            y_offset += 70  # Increment Y offset for the next appointment
+    
+    def update_appointments_thread():
+        while True:
+            display_appointments()
+            # Update appointments every 15 seconds
+            time.sleep(15)
+
+    update_thread = threading.Thread(target=update_appointments_thread)
+    update_thread.daemon = True  # Daemonize the thread so it automatically exits when the main program exits
+    update_thread.start()
+    
 def UserProfile(CompanyName,UserID):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
