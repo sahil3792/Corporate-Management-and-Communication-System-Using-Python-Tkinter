@@ -4705,8 +4705,8 @@ def UploadDocument(CompanyName,UserID):
                 print("Document uploaded successfully.")
     
     def share_file(file_id, selected_users):
-        # Update the document in the database to include the users it is shared with
-        DocumentCollection.update_one({"_id": file_id}, {"$set": {"shared_with": selected_users}})
+        # Update the document in the database to include the new users in shared_with
+        DocumentCollection.update_one({"_id": file_id}, {"$push": {"shared_with": {"$each": selected_users}}})
         print(f"File shared with {selected_users} successfully.")
         share_window.destroy()  # Close the share window after submitting
 
@@ -4719,7 +4719,7 @@ def UploadDocument(CompanyName,UserID):
         share_window.configure(bg = "#173054")
                 
         canvas = Canvas(
-            window,
+            share_window,
             bg = "#173054",
             height = 299,
             width = 437,
@@ -4747,25 +4747,25 @@ def UploadDocument(CompanyName,UserID):
             font=("LibreCaslonText Regular", 16 * -1)
         )
 
-        TextBoxtoSelectUsersBGImage = PhotoImage(
-            file=relative_to_assets("entry_61.png"))
-        entry_bg_1 = canvas.create_image(
-            269.5,
-            63.0,
-            image=TextBoxtoSelectUsersBGImage
-        )
-        entry_1 = Entry(
-            bd=0,
-            bg="#D9D9D9",
-            fg="#000716",
-            highlightthickness=0
-        )
-        entry_1.place(
-            x=136.0,
-            y=50.0,
-            width=267.0,
-            height=24.0
-        )
+        # TextBoxtoSelectUsersBGImage = PhotoImage(
+        #     file=relative_to_assets("entry_61.png"))
+        # entry_bg_1 = canvas.create_image(
+        #     269.5,
+        #     63.0,
+        #     image=TextBoxtoSelectUsersBGImage
+        # )
+        # entry_1 = Entry(
+        #     bd=0,
+        #     bg="#D9D9D9",
+        #     fg="#000716",
+        #     highlightthickness=0
+        # )
+        # entry_1.place(
+        #     x=136.0,
+        #     y=50.0,
+        #     width=267.0,
+        #     height=24.0
+        # )
 
         canvas.create_rectangle(
             100.0,
@@ -4778,6 +4778,7 @@ def UploadDocument(CompanyName,UserID):
         SharetheDocumentButtonImage = PhotoImage(
             file=relative_to_assets("button_52.png"))
         button_1 = Button(
+            share_window,
             image=SharetheDocumentButtonImage,
             borderwidth=0,
             highlightthickness=0,
@@ -4794,9 +4795,9 @@ def UploadDocument(CompanyName,UserID):
         usernames = EmployeeCollection.distinct('UserName', {'CompanyName': CompanyName})
         print(usernames)
 
+        # Function to populate the dropdown menu with usernames
         def populate_dropdown(usernames):
-            for username in usernames:
-                user_dropdown['values'] = user_dropdown['values'] + (username,)
+            user_dropdown['values'] = usernames
 
         # Dropdown menu for selecting users
         user_dropdown = ttk.Combobox(share_window)
@@ -4810,7 +4811,7 @@ def UploadDocument(CompanyName,UserID):
         
         # Button to add selected user to the listbox
         add_button = tk.Button(share_window, text="Add", command=lambda: selected_users_listbox.insert(tk.END, user_dropdown.get()))
-        add_button.place(x=350, y=50.0, width=60.0, height=24.0)
+        add_button.place(x=350, y=90.0, width=60.0, height=24.0)
 
         # Button to submit selected users
         submit_button = Button(share_window, text="Submit", command=lambda: share_file(file_id, selected_users_listbox.get(0, tk.END)))
