@@ -35,6 +35,7 @@ import socket
 import threading
 import customtkinter
 import subprocess
+from bson import Binary
 
 try:
     import nltk
@@ -103,6 +104,7 @@ GroupChatDatabase = client["GroupChatDatabase"]
 TodoListDatabase = client["TodoListDatabase"]
 LeaveManagementDatabase = client["LeaveManagementDatabase"]
 AppointmentSchedulingDatabase = client['AppointmentSchedulingDatabase']
+DocumentDatabase = client['DocumentDatabase']
 
 
 AdminCollection = AdminDatabase["ManagerCollection"]
@@ -112,6 +114,7 @@ GroupChatCollection = GroupChatDatabase["GroupChatCollection"]
 TodoListCollection = TodoListDatabase["TodoListCollection"]
 LeaveManagementCollection = LeaveManagementDatabase["LeaveManagementCollection"]
 AppointmentSchedullingCollection = AppointmentSchedulingDatabase['AppointmentSchedulingCollection']
+DocumentCollection = DocumentDatabase['DocumentCollection']
 
 #print(client.list_database_names)
 
@@ -4679,6 +4682,77 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
     update_thread.daemon = True  # Daemonize the thread so it automatically exits when the main program exits
     update_thread.start()
     
+def upload():
+    file_path = filedialog.askopenfilename()
+    if file_path:
+        with open(file_path, 'rb') as file:
+            document_data = file.read()
+            document_name = file_path.split('/')[-1]  # Extract filename from path
+            document = {'name': document_name, 'data': Binary(document_data)}
+            DocumentCollection.insert_one(document)
+            print("Document uploaded successfully.")
+
+def UploadDocument(CompanyName,UserID):
+    global UploadDocumentButtonImage
+    UploadDocumentFrame = Frame(window, height="450", width="510")
+    UploadDocumentFrame.place(x=36,y=0)
+        
+    canvas = Canvas(
+        UploadDocumentFrame,
+        bg = "#173054",
+        height = 450,
+        width = 510,
+        bd = 0,
+        highlightthickness = 0,
+        relief = "ridge"
+    )
+
+    canvas.place(x = 0, y = 0)
+    canvas.create_text(
+        21.0,
+        7.0,
+        anchor="nw",
+        text="Files",
+        fill="#FFFFFF",
+        font=("LibreCaslonText Regular", 18 * -1)
+    )
+
+    UploadDocumentButtonImage = PhotoImage(
+        file=relative_to_assets("button_51.png"))
+    button_1 = Button(
+        UploadDocumentFrame,
+        image=UploadDocumentButtonImage,
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: upload(),
+        relief="flat"
+    )
+    button_1.place(
+        x=383.0,
+        y=13.0,
+        width=106.0,
+        height=36.0
+    )
+
+    canvas.create_rectangle(
+        21.0,
+        60.0,
+        489.0,
+        91.0,
+        fill="#3A868F",
+        outline="")
+
+    canvas.create_text(
+        30.0,
+        68.0,
+        anchor="nw",
+        text="File Name",
+        fill="#FFFFFF",
+        font=("LibreCaslonText Regular", 17 * -1)
+    )
+
+
+
 def UserProfile(CompanyName,UserID):
 
     global image_image_1,image_image_2,button_image_1,button_image_2,button_image_3,button_image_4,button_image_5,button_image_6
@@ -4913,7 +4987,7 @@ def UserProfile(CompanyName,UserID):
             image=button_image_9,
             borderwidth=0,
             highlightthickness=0,
-            command=lambda: print("button_21 clicked"),
+            command=lambda: UploadDocument(CompanyName,UserID),
             relief="flat"
         )
         button_9.place(
