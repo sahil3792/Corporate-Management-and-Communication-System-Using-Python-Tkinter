@@ -4682,21 +4682,149 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
     update_thread.daemon = True  # Daemonize the thread so it automatically exits when the main program exits
     update_thread.start()
     
-def upload():
-    file_path = filedialog.askopenfilename()
-    if file_path:
-        with open(file_path, 'rb') as file:
-            document_data = file.read()
-            document_name = file_path.split('/')[-1]  # Extract filename from path
-            document = {'name': document_name, 'data': Binary(document_data)}
-            DocumentCollection.insert_one(document)
-            print("Document uploaded successfully.")
+
 
 def UploadDocument(CompanyName,UserID):
     global UploadDocumentButtonImage
     UploadDocumentFrame = Frame(window, height="450", width="510")
     UploadDocumentFrame.place(x=36,y=0)
+
+    def upload():
+        file_path = filedialog.askopenfilename()
+        if file_path:
+            with open(file_path, 'rb') as file:
+                document_data = file.read()
+                document_name = os.path.basename(file_path)
+                document = {
+                    'name': document_name, 
+                    'data': Binary(document_data), 
+                    'CompanyName': CompanyName, 
+                    'shared_with': [UserID]  # Store UserID in the shared_with array
+                }
+                DocumentCollection.insert_one(document)
+                print("Document uploaded successfully.")
+    
+    def share_file(file_id, selected_users):
+        # Update the document in the database to include the users it is shared with
+        DocumentCollection.update_one({"_id": file_id}, {"$set": {"shared_with": selected_users}})
+        print(f"File shared with {selected_users} successfully.")
+        share_window.destroy()  # Close the share window after submitting
+
+    
+    def open_share_window(file_id):
+        global share_window,TextBoxtoSelectUsersBGImage,SharetheDocumentButtonImage
+        share_window = Toplevel()
+        share_window.title("Share File")
+        share_window.geometry("437x299")
+        share_window.configure(bg = "#173054")
+                
+        canvas = Canvas(
+            window,
+            bg = "#173054",
+            height = 299,
+            width = 437,
+            bd = 0,
+            highlightthickness = 0,
+            relief = "ridge"
+        )
+
+        canvas.place(x = 0, y = 0)
+        canvas.create_text(
+            109.0,
+            7.0,
+            anchor="nw",
+            text="Share file",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 20 * -1)
+        )
+
+        canvas.create_text(
+            21.0,
+            53.0,
+            anchor="nw",
+            text="Select User:",
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 16 * -1)
+        )
+
+        TextBoxtoSelectUsersBGImage = PhotoImage(
+            file=relative_to_assets("entry_61.png"))
+        entry_bg_1 = canvas.create_image(
+            269.5,
+            63.0,
+            image=TextBoxtoSelectUsersBGImage
+        )
+        entry_1 = Entry(
+            bd=0,
+            bg="#D9D9D9",
+            fg="#000716",
+            highlightthickness=0
+        )
+        entry_1.place(
+            x=136.0,
+            y=50.0,
+            width=267.0,
+            height=24.0
+        )
+
+        canvas.create_rectangle(
+            100.0,
+            95.0,
+            336.0,
+            203.0,
+            fill="#D9D9D9",
+            outline="")
+
+        SharetheDocumentButtonImage = PhotoImage(
+            file=relative_to_assets("button_52.png"))
+        button_1 = Button(
+            image=SharetheDocumentButtonImage,
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: print("button_1 clicked"),
+            relief="flat"
+        )
+        button_1.place(
+            x=161.0,
+            y=237.0,
+            width=115.0,
+            height=43.0
+        )
         
+        usernames = EmployeeCollection.distinct('UserName', {'CompanyName': CompanyName})
+        print(usernames)
+
+        def populate_dropdown(usernames):
+            for username in usernames:
+                user_dropdown['values'] = user_dropdown['values'] + (username,)
+
+        # Dropdown menu for selecting users
+        user_dropdown = ttk.Combobox(share_window)
+        user_dropdown.place(x=136.0, y=50.0, width=267.0, height=24.0)
+        populate_dropdown(usernames)  # Populate the dropdown with usernames
+
+        # Listbox for displaying selected users
+        selected_users_listbox = tk.Listbox(share_window)
+        selected_users_listbox.place(x=100.0, y=95.0, width=236.0, height=108.0)
+
+        
+        # Button to add selected user to the listbox
+        add_button = tk.Button(share_window, text="Add", command=lambda: selected_users_listbox.insert(tk.END, user_dropdown.get()))
+        add_button.place(x=350, y=50.0, width=60.0, height=24.0)
+
+        # Button to submit selected users
+        submit_button = Button(share_window, text="Submit", command=lambda: share_file(file_id, selected_users_listbox.get(0, tk.END)))
+        submit_button.place(x=161.0, y=237.0, width=115.0, height=43.0)
+
+    def download_file(file_name):
+        document = DocumentCollection.find_one({'name': file_name})
+        if document:
+            file_data = document['data']
+            file_path = filedialog.asksaveasfilename(defaultextension=".txt")
+            with open(file_path, 'wb') as file:
+                file.write(file_data)
+                print("File downloaded successfully.")
+                
     canvas = Canvas(
         UploadDocumentFrame,
         bg = "#173054",
@@ -4734,22 +4862,40 @@ def UploadDocument(CompanyName,UserID):
         height=36.0
     )
 
-    canvas.create_rectangle(
-        21.0,
-        60.0,
-        489.0,
-        91.0,
-        fill="#3A868F",
-        outline="")
 
-    canvas.create_text(
-        30.0,
-        68.0,
-        anchor="nw",
-        text="File Name",
-        fill="#FFFFFF",
-        font=("LibreCaslonText Regular", 17 * -1)
-    )
+    files = DocumentCollection.find({'CompanyName': CompanyName, 'shared_with': UserID})
+
+    y_offset = 100
+    for file in files:
+        file_id = file['_id']
+        file_name = file['name']
+        
+        canvas.create_rectangle(
+            21.0,
+            y_offset,
+            489.0,
+            y_offset + 31.0,
+            fill="#3A868F",
+            outline=""
+        )
+        canvas.create_text(
+            30.0,
+            y_offset + 8.0,
+            anchor="nw",
+            text=file_name,
+            fill="#FFFFFF",
+            font=("LibreCaslonText Regular", 17 * -1)
+        )
+        
+        # Create a button for sharing the file
+        share_button = tk.Button(UploadDocumentFrame, text="Share", command=lambda file_id=file_id: open_share_window(file_id))
+        share_button.place(x=450, y=y_offset + 5)
+
+        # Create a button for downloading the file
+        download_button = tk.Button(UploadDocumentFrame, text="Download", command=lambda file_name=file_name: download_file(file_name))
+        download_button.place(x=350, y=y_offset + 5)
+        
+        y_offset += 40
 
 
 
