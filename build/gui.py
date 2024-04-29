@@ -4821,10 +4821,10 @@ def UploadDocument(CompanyName,UserID):
         document = DocumentCollection.find_one({'name': file_name})
         if document:
             file_data = document['data']
-            file_path = filedialog.asksaveasfilename(defaultextension=".txt")
+            file_path = filedialog.asksaveasfilename(defaultextension="." + os.path.splitext(file_name)[1])
             with open(file_path, 'wb') as file:
                 file.write(file_data)
-                print("File downloaded successfully.")
+            print("File downloaded successfully.")
                 
     canvas = Canvas(
         UploadDocumentFrame,
