@@ -4682,8 +4682,6 @@ def AppointmentSchedulingAndDisplay(CompanyName,UserID):
     update_thread.daemon = True  # Daemonize the thread so it automatically exits when the main program exits
     update_thread.start()
     
-
-
 def UploadDocument(CompanyName,UserID):
     global UploadDocumentButtonImage
     UploadDocumentFrame = Frame(window, height="450", width="510")
@@ -4897,8 +4895,6 @@ def UploadDocument(CompanyName,UserID):
         download_button.place(x=350, y=y_offset + 5)
         
         y_offset += 40
-
-
 
 def UserProfile(CompanyName,UserID):
 
@@ -5369,9 +5365,7 @@ def receive_notifications():
                 JoinMeetingClient(user_invited_by)
     except Exception as e:
         messagebox.showerror("Error", f"Failed to receive notification: {e}")
-
 # Start receiving notifications in a separate thread
-
 
 def check_username(UserName):
     existing_user = EmployeeCollection.find_one({"UserName": UserName})
