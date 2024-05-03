@@ -58,7 +58,8 @@ import socket
 import threading
 import logging
 
-conn_str = "mongodb+srv://root:812003@cluster0.fshfquh.mongodb.net/?retryWrites=true&w=majority"
+conn_str = "mongodb+srv://root:812003@cluster0.fshfquh.mongodb.net/?retryWrites=true&w=majority&ssl=true"
+
 client = MongoClient(conn_str, server_api=ServerApi('1'))
 
 try:

@@ -4,7 +4,7 @@ import threading
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-conn_str = "mongodb+srv://root:812003@cluster0.fshfquh.mongodb.net/?retryWrites=true&w=majority"
+conn_str = "mongodb+srv://root:812003@cluster0.fshfquh.mongodb.net/?retryWrites=true&w=majority&ssl=true"
 client = MongoClient(conn_str, server_api=ServerApi('1'))
 AdminDatabase = client["AdminDatabase"]
 EmployeeDatabase = client["EmployeeDatabase"]
